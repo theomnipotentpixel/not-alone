@@ -1555,7 +1555,7 @@ const m = p => {
 	let query = "";
 	function getRooms() {
 		roomsdiv.html("Loading")
-		fetch("https://not-alone-server.thedt365.repl.co/list/" + query)
+		fetch("https://xenith.ngrok.app/list/" + query)
 			.then(res => res.text())
 			.then(data => {
 				// <button>Play Classic</button><hr>
