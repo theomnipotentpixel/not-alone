@@ -132,7 +132,7 @@ const g = p => {
 
 	p.quit = function() {
 		if (host) {
-			fetch("https://not-alone-server.thedt365.repl.co/flatline/" + peer.id)
+			fetch("https://xenith.ngrok.app/flatline/" + peer.id)
 				.then(res => res.text())
 			for (const [id, client] of Object.entries(clients)) {
 				if (client.close) client.close()
@@ -194,7 +194,7 @@ const g = p => {
 	}
 
 	let heartbeatfunc = () => {
-		fetch("https://not-alone-server.thedt365.repl.co/heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
+		fetch("https://xenith.ngrok.app/heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
 			.then(res => res.text())
 	}
 
@@ -1572,7 +1572,7 @@ const m = p => {
 						if (room.version > VERSION)
 							return showMsgBox("Outdated!", "Your version of the game is out of date, and cannot connect to rooms on version " + VERSION.toFixed(1) + ".0 or above. Consider updating!")
 						showMsgBox("Connecting", "Locating room...", false)
-						fetch("https://not-alone-server.thedt365.repl.co/get/" + connID)
+						fetch("https://xenith.ngrok.app/get/" + connID)
 							.then(res => res.text())
 							.then(data => {
 								if (data == "oops")
