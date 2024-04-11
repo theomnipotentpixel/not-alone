@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>You're Not Alone - Editor</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.js"></script>
+  </head>
+  <body>
+	  <span id="editor">
+		<input id="lpn" placeholder="Level pack name" type="text" value="Untitled">
+		<buttonrow id="btnrow">
+			<button class="square" id="help">?</button>
+			<button class="fromgame" id="save">Save</button>
+			<button class="fromgame" id="load">Load</button>
+			<button class="hide" id="download">Export</button>
+			<button class="hide" id="open">Open</button>
+			<select id="levels">
+				<option value="0,0">0,0</option>
+			</select>
+			<button class="square" id="add">+</button>
+			<button class="square" id="remove">×</button>
+		</buttonrow>
+		<span id="v">
+		  <div class="inp" id="main"></div>
+		</span>
+	  </span>
+	  <version>1.1.2</version>
+    <script src="script.js"></script>
+  </body>
+</html>
