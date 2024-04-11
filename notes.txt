@@ -1,0 +1,29 @@
+theme: "You're not alone"
+
+vertical platformer
+
+pressing a hotkey while falling summons a guardian angel to reset
+you back to your last position
+
+at the top you meet the guardian angel?
+^
+|
+
+you're not alone could also have a creepy astetic to it
+tho im pretty sure most people are going for that
+
+other previously mentioned ideas:
+
+"ooh for youre not alone, maybe you 
+are trying to find someone else"
+
+"youre not alone, maybe some portal-esque 
+feel with a robot voice" i dont rly wanna do this cuz of the voice acting required
+could just use tts
+absolutely not
+sacrelig
+perchance
+could use text that appears like classic dialogue systems
+ok maybe not that
+or maybe that depends on the style of game we were making
+tho probs shouldnt pause the game for the dialogue if mid-jump

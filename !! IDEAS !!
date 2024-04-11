@@ -1,0 +1,61 @@
+UPDATE 1.0
+
+ice: slippery (no friction) (less maybe?)
+coins: just go "bleep" and vanish when touched (client side only)
+trampoline/something else maybe: when you land on it, it
+bounces you back up to the same height
+construction/industrial tiles
+
+UPDATE 1.1
+conveyor belts work right now
+
+IDEAS FOR FUTURE UPDATES
+
+tiles that do new things
+
+jetpack: instead of jump you now fly
+jetpack removal: removes your jetpack
+bounce pad: bounces you in the direction it faces
+crumble: breaks on touch
+key: when collected act like smm key and follow you (maybe
+reuse fuqer code??)
+key block: when touched while you have a key, remove this and
+all adjacent key blocks
+
+decor
+magma/lava tiles
+techy tiles
+city tiles
+
+FX TILES:
+each tile can have an fx tile
+0,0 : 0,0-fx
+fg_0,0 : fg_0,0-fx
+npc_0,0 : npc_0,0-fx
+allows certain effects to be placed on individual tiles
+EFFECTS:
+mirage: disables collision and fades away on touch
+ghost: fades into existance when near
+bounce: makes the tile bounce up (does not change collision)
+float: makes the tile bob up and down slowly
+
+-------- OLD --------
+NEW LAYER:
+FX layer
+
+BG and FG layers house tiles, NPC layer handles NPCS, and
+the FX layer is for effect tiles
+
+something as simple as a FG FADE tile fx, that when placed
+on top of tiles, causes the foreground tile to have no
+collision and fade out when you get near, like a secret
+path inside the walls
+
+fx ideas:
+
+FG FADE - removes collision of foreground and fades it out
+as you get near
+NPC HOP - makes the npc appear as if it were hopping up
+and down
+NPC HIDE - hides the npc and always shows dialogue
+FLIP - vertically flips any tiles and npcs 
