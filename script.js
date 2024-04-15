@@ -143,7 +143,7 @@ const g = p => {
 
 	p.quit = function() {
 		if (host) {
-			fetch("https://www.jrtech.me//flatline/" + peer.id)
+			fetch("https://www.jrtech.me/flatline/" + peer.id)
 				.then(res => res.text())
 			for (const [id, client] of Object.entries(clients)) {
 				if (client.close) client.close()
@@ -205,7 +205,7 @@ const g = p => {
 	}
 
 	let heartbeatfunc = () => {
-		fetch("https://www.jrtech.me//heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
+		fetch("https://www.jrtech.me/heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
 			.then(res => res.text())
 	}
 
@@ -1566,7 +1566,7 @@ const m = p => {
 	let query = "";
 	function getRooms() {
 		roomsdiv.html("Loading")
-		fetch("https://www.jrtech.me//list/" + query)
+		fetch("https://www.jrtech.me/list/" + query)
 			.then(res => res.text())
 			.then(data => {
 				// <button>Play Classic</button><hr>
