@@ -9,6 +9,15 @@ let editorData = {
 	f: 4
 }
 
+let button_npcTalk = 38;
+let button_jump = 32;
+
+function switchSpaceAndUp(){
+	let tmp = button_npcTalk;
+	button_npcTalk = button_jump;
+	button_jump = tmp;
+}
+
 if (!localStorage.lvlpacks) localStorage.lvlpacks = '[]'
 let lvlpacks = JSON.parse(localStorage.lvlpacks)
 
@@ -604,7 +613,7 @@ const g = p => {
 			else
 				this.frame = 3
 			if (!this.control) this.down = (p.keyIsDown(83) || p.keyIsDown(p.DOWN_ARROW)) && !paused
-			if (!this.control) this.jump = p.keyIsDown(32) && !paused
+			if (!this.control) this.jump = p.keyIsDown(button_jump) && !paused
 			this.x += this.cx
 			this.cx = 0
 			if (this.jump && this.jetpack)
@@ -1415,7 +1424,7 @@ Signals: ${signals.length}`, 0, 0)
 			levelsmenu.hide()
 		}
 		if (paused) return
-		if (p.keyCode == 87 || p.keyCode == p.UP_ARROW) {
+		if (p.keyCode == 87 || p.keyCode == button_npcTalk) {
 			send({
 				type: "control",
 				key: "up",
