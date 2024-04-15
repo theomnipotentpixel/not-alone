@@ -6,7 +6,7 @@ let connectionIDS = {}
 
 const requestListener = function (req, res) {
 	res.setHeader('Content-Type', 'text/plain')
-	res.setHeader('Access-Control-Allow-Origin', req.header.origin);
+	res.setHeader('Access-Control-Allow-Origin', '*');
 	res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
 	res.setHeader('Access-Control-Allow-Headers', 'content-type');
 	res.setHeader('Access-Control-Max-Age', 2592000); // 30 days
