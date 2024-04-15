@@ -143,7 +143,7 @@ const g = p => {
 
 	p.quit = function() {
 		if (host) {
-			fetch("https://xenith.ngrok.app/flatline/" + peer.id)
+			fetch("http://18.188.219.68/flatline/" + peer.id)
 				.then(res => res.text())
 			for (const [id, client] of Object.entries(clients)) {
 				if (client.close) client.close()
@@ -205,7 +205,7 @@ const g = p => {
 	}
 
 	let heartbeatfunc = () => {
-		fetch("https://xenith.ngrok.app/heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
+		fetch("http://18.188.219.68/heartbeat/" + peer.id + "/" + host + "/" + VERSION + "/" + PATCH)
 			.then(res => res.text())
 	}
 
@@ -1566,7 +1566,7 @@ const m = p => {
 	let query = "";
 	function getRooms() {
 		roomsdiv.html("Loading")
-		fetch("https://xenith.ngrok.app/list/" + query)
+		fetch("http://18.188.219.68/list/" + query)
 			.then(res => res.text())
 			.then(data => {
 				// <button>Play Classic</button><hr>
@@ -1583,7 +1583,7 @@ const m = p => {
 						if (room.version > VERSION)
 							return showMsgBox("Outdated!", "Your version of the game is out of date, and cannot connect to rooms on version " + VERSION.toFixed(1) + ".0 or above. Consider updating!")
 						showMsgBox("Connecting", "Locating room...", false)
-						fetch("https://xenith.ngrok.app/get/" + connID)
+						fetch("http://18.188.219.68/get/" + connID)
 							.then(res => res.text())
 							.then(data => {
 								if (data == "oops")
