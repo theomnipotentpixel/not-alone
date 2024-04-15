@@ -9,13 +9,15 @@ let editorData = {
 	f: 4
 }
 
+let settings = {
+	swapJumpAndTalk: false,
+}
+
 let button_npcTalk = 38;
 let button_jump = 32;
 
 window.switchSpaceAndUp = function(){
-	let tmp = button_npcTalk;
-	button_npcTalk = button_jump;
-	button_jump = tmp;
+	settings.swapJumpAndTalk = !settings.swapJumpAndTalk
 }
 
 if (!localStorage.lvlpacks) localStorage.lvlpacks = '[]'
@@ -613,7 +615,7 @@ const g = p => {
 			else
 				this.frame = 3
 			if (!this.control) this.down = (p.keyIsDown(83) || p.keyIsDown(p.DOWN_ARROW)) && !paused
-			if (!this.control) this.jump = p.keyIsDown(button_jump) && !paused
+			if (!this.control) this.jump = (settings.swapJumpAndTalk ? (p.keyIsDown(87) || p.keyIsDown(button_npcTalk)) : p.keyIsDown(button_jump)) && !paused
 			this.x += this.cx
 			this.cx = 0
 			if (this.jump && this.jetpack)
@@ -1424,7 +1426,7 @@ Signals: ${signals.length}`, 0, 0)
 			levelsmenu.hide()
 		}
 		if (paused) return
-		if (p.keyCode == 87 || p.keyCode == button_npcTalk) {
+		if (!settings.swapJumpAndTalk ? (p.keyCode == (87) || p.keyCode == (button_npcTalk)) : p.keyCode == (button_jump)) {
 			send({
 				type: "control",
 				key: "up",
@@ -1512,7 +1514,7 @@ Signals: ${signals.length}`, 0, 0)
 		let left = (p.keyIsDown(65) || p.keyIsDown(p.LEFT_ARROW))
 		let right = (p.keyIsDown(68) || p.keyIsDown(p.RIGHT_ARROW))
 		let down = (p.keyIsDown(83) || p.keyIsDown(p.DOWN_ARROW))
-		let jump = p.keyIsDown(32)
+		let jump = settings.swapJumpAndTalk ? (p.keyIsDown(87) || p.keyIsDown(button_npcTalk)) : p.keyIsDown(button_jump)
 		if (left)
 			send({
 				type: "control",
