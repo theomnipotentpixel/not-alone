@@ -29,7 +29,7 @@ const requestListener = function (req, res) {
 				clearTimeout(lobby.timeout)
 				lobby.timeout = setTimeout(()=>{
 					delete lobbies[id]
-					delete connectionIDS[connID]
+					delete connectionIDS[lobby.connID]
 				},30000)
 			} else {
 				let connID = ++lobbycount
