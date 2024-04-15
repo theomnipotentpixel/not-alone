@@ -12,7 +12,7 @@ let editorData = {
 let button_npcTalk = 38;
 let button_jump = 32;
 
-function switchSpaceAndUp(){
+window.switchSpaceAndUp = function(){
 	let tmp = button_npcTalk;
 	button_npcTalk = button_jump;
 	button_jump = tmp;
