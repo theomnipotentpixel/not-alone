@@ -211,21 +211,25 @@ let fileHandle
 
 download = document.getElementById("download")
 download.onclick = async()=>{
-	if (!fileHandle) downloadObj(levels, "levels.json")
+	let data = JSON.stringify(levels)+`
+${levelpack[1]}
+${levelpack[2]}
+${levelPackName.value}`
+	if (!fileHandle) downloadStr(data, levelPackName.value+".lvls")
 	else { // use the fancy api
 		try {
 			download.disabled = true
 			// Create a file stream to write to.
 			const writable = await fileHandle.createWritable();
 			// Write the contents of the file to the stream.
-			await writable.write(JSON.stringify(levels));
+			await writable.write(data);
 			// Close the file and write the contents to disk.
 			await writable.close();
 			msg("Save complete!")
 			download.disabled = false
 		} catch (e) {
 			download.disabled = false
-			downloadObj(levels, "levels.json")
+			downloadStr(data, levelPackName.value+".lvls")
 		}
 	}
 }
@@ -235,7 +239,12 @@ open.onclick = async()=>{
 	[fileHandle] = await showOpenFilePicker()
 	const file = await fileHandle.getFile();
 	const contents = await file.text();
-	levels = JSON.parse(contents)
+	levelpack = contents.split(/\r?\n/gm)
+	levelpack[0] = JSON.parse(levelpack[0])
+	levelpack[1] = parseInt(levelpack[1])
+	levelpack[2] = parseInt(levelpack[2])
+	levelPackName.value = levelpack[3]
+	levels = levelpack[0]
 	levelselect.innerHTML = ""
 	Object.keys(levels).forEach(name=>{
 		var option = document.createElement("option");
@@ -307,6 +316,16 @@ removebtn.onclick = ()=>{
 
 function downloadObj(exportObj, exportName){
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", exportName);
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function downloadStr(exportStr, exportName){
+    var dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(exportStr);
     var downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
     downloadAnchorNode.setAttribute("download", exportName);
