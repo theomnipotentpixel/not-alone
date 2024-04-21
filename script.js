@@ -40,9 +40,8 @@ peer.on("disconnected", e => {
 
 let VERSION = 0.3
 let PATCH = 0
-if (window.location.href == "https://pixlperfect01.github.io/not-alone/") {
-	VERSION = 99.9
-	PATCH = 999
+if (window.location.hostname == "localhost" || window.location.href == "https://pixlperfect01.github.io/not-alone/") {
+	VERSION += 999
 }
 if (localStorage.lastver == undefined)
 	localStorage.lastver = VERSION * 100 + PATCH
@@ -635,10 +634,10 @@ const g = p => {
 							if (left == 167 || right == 167) {
 								this.dy = -Math.abs(this.dy) + 1
 								bouncesfx.play();
-							} else if (right == 227 && this.dy > 0.5) {
+							} else if (!this.control && right == 227 && this.dy > 0.5) {
 								delete levels[currentLevelX + "," + currentLevelY][rightp]
 								this.dy = -5
-							} else if (left == 227 && this.dy > 0.5) {
+							} else if (!this.control && left == 227 && this.dy > 0.5) {
 								delete levels[currentLevelX + "," + currentLevelY][leftp]
 								this.dy = -5
 							} else {
@@ -1636,7 +1635,7 @@ const m = p => {
 		if (!npcs) npcs = p.loadImage("npcs.png");
 		if (!tilesets.grassy) tilesets.grassy = p.loadImage("tiles/grassy.png");
 		if (!player_img) player_img = p.loadImage("character.png");
-		if (!defaultlevels) defaultlevels = p.loadStrings("levels.lvls")
+		if (!defaultlevels) defaultlevels = p.loadStrings("levelpacks/classic.lvls")
 	}
 	p.setup = function() {
 		p.createCanvas(480, 480)
