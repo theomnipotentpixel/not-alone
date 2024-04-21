@@ -39,7 +39,7 @@ peer.on("disconnected", e => {
 })
 
 let VERSION = 0.3
-let PATCH = 0
+let PATCH = 1
 if (window.location.hostname == "localhost" || window.location.href == "https://pixlperfect01.github.io/not-alone/") {
 	VERSION += 999
 }
@@ -98,17 +98,7 @@ let jetpack;
 
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
 let errmsg =
-	`- Fixed many display issues on firefox
-
-- Added spring pads, the jetpack, and keys
-
-- Did some conveyor belt fixes
-
-- Incremented the version number
-
-- Added new backgrounds to the main menu
-
-- Added credits in the help menu and moved it to superior location (github my beloved) (replit can die)`;
+	`- Fixed crumble blocks not working properly`;
 let showerr = true;
 if (parseFloat(localStorage.lastver) != VERSION * 100 + PATCH)
 	localStorage.lastver = VERSION * 100 + PATCH
