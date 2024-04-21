@@ -98,7 +98,9 @@ let jetpack;
 
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
 let errmsg =
-	`- Fixed crumble blocks not working properly`;
+	`- Fixed crumble blocks not working properly
+
+- Added import/export buttons to the level editor`;
 let showerr = true;
 if (parseFloat(localStorage.lastver) != VERSION * 100 + PATCH)
 	localStorage.lastver = VERSION * 100 + PATCH
