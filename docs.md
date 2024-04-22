@@ -91,6 +91,16 @@ ignored when received
 
 - `key` (up/down/left/right/jump) - the control key that was pressed
 
+### `talkto`
+
+sent when a player talks to an npc
+
+ignored when received
+
+- `id` - player id
+- `index` - the npc index that was talked to
+- `text` - the text that the npc says next
+
 ## Unused packets
 
 Packets that are never sent in the vanilla game, but will be interpreted when received

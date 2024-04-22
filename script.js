@@ -1,5 +1,6 @@
 // happen once on page load
 let defaultlevels
+let builtins
 let gamewin = document.getElementById("gamewin");
 
 let peer = new Peer();
@@ -921,6 +922,7 @@ const g = p => {
 	let pausemenu;
 	let optionsmenu;
 	let levelsmenu;
+	let loadingmenu;
 
 	let movepacketinterval;
 
@@ -1002,7 +1004,18 @@ const g = p => {
 		optionsmenu.child(optionsdiv)
 		optionsdiv.style("padding", "12px")
 
-		levelsmenu = p.createDiv('<h3>Level Packs')
+		loadingmenu = p.createDiv('<h3>Loading</h3>')
+		loadingmenu.class("flashdiv")
+		loadingmenu.position(16, 80)
+		loadingmenu.size(448, 320)
+		loadingmenu.hide()
+
+		let loadingdiv = p.createDiv()
+		loadingmenu.child(loadingdiv)
+		loadingdiv.style("padding", "12px")
+		loadingdiv.child(document.createTextNode("Loading..."))
+
+		levelsmenu = p.createDiv('<h3>Level Packs</h3>')
 		levelsmenu.class("flashdiv")
 		levelsmenu.position(16, 80)
 		levelsmenu.size(448, 320)
@@ -1019,8 +1032,60 @@ const g = p => {
 			span.style.justifyContent = "center"
 			span.style.height = "100%"
 			lvlpacks = JSON.parse(localStorage.lvlpacks)
+			// built in packs
+			span.innerHTML = "Official Level Packs<span><hr></span>"
+			let btnspan = document.createElement("span")
+			btnspan.style.flex = "auto 1 0%"
+			btnspan.style.overflow = "auto"
+			btnspan.style.display = "flex"
+			btnspan.style.flexDirection = "column"
+			builtins.packs.forEach((e, i) => {
+				let btnswrap = document.createElement("span")
+				btnswrap.style.display = "flex"
+				btnswrap.style.gap = "5px"
+
+				let btn = document.createElement("button")
+				btn.onmouseover = () => selectsfx.play()
+				btn.className = "flexbtn"
+				btn.style.flex = "1"
+				let namespan = document.createElement("span")
+				namespan.innerText = e.name
+				btn.appendChild(namespan)
+				btnswrap.appendChild(btn)
+
+				btn.onclick = async () => {
+					signalsfx.play()
+					levelsmenu.hide()
+					if (!e.cache) {
+						loadingmenu.elt.style.display = "flex"
+						let c = await (await fetch(e.url)).text()
+						e.cache = c
+						loadingmenu.hide()
+					}
+					optionsmenu.elt.style.display = "flex"
+					currentLevelPack = e.cache.split("\n")
+					broadcast({
+						type: "levelpack",
+						levelpack: currentLevelPack
+					})
+				}
+
+				btnspan.appendChild(btnswrap)
+			})
+			span.appendChild(btnspan)
+			// custom packs
 			if (lvlpacks.length > 0) {
-				span.innerHTML = "Custom Level Packs<span><hr></span>"
+				{
+					let hrspan = document.createElement("span")
+					hrspan.append(document.createElement("hr"))
+					span.append(hrspan)
+				}
+				span.append(document.createTextNode("Custom Level Packs"))
+				{
+					let hrspan = document.createElement("span")
+					hrspan.append(document.createElement("hr"))
+					span.append(hrspan)
+				}
 				let btnspan = document.createElement("span")
 				btnspan.style.flex = "1"
 				btnspan.style.overflow = "auto"
@@ -1054,8 +1119,7 @@ const g = p => {
 					btnspan.appendChild(btnswrap)
 				})
 				span.appendChild(btnspan)
-			} else
-				span.innerHTML = "No Custom Packs<span><br></span>"
+			}
 		}
 
 		//optionsdiv.child(p.createP("Admin Controls"))
@@ -1408,13 +1472,15 @@ Signals: ${signals.length}`, 0, 0)
 	p.keyPressed = function() {
 		moved = true
 		if (p.keyCode == p.ESCAPE) {
-			paused = !paused
-			if (paused)
-				pausemenu.elt.style.display = "flex"
-			else
-				pausemenu.hide()
-			optionsmenu.hide()
-			levelsmenu.hide()
+			if (loadingmenu.elt.style.display != "flex") {
+				paused = !paused
+				if (paused)
+					pausemenu.elt.style.display = "flex"
+				else
+					pausemenu.hide()
+				optionsmenu.hide()
+				levelsmenu.hide()
+			}
 		}
 		if (paused) return
 		if (!settings.swapJumpAndTalk ? (p.keyCode == (87) || p.keyCode == (button_npcTalk)) : p.keyCode == (button_jump)) {
@@ -1628,8 +1694,10 @@ const m = p => {
 		if (!tilesets.grassy) tilesets.grassy = p.loadImage("tiles/grassy.png");
 		if (!player_img) player_img = p.loadImage("character.png");
 		if (!defaultlevels) defaultlevels = p.loadStrings("levelpacks/classic.lvls")
+		if (!builtins) builtins = p.loadJSON("levelpacks/builtins.json")
 	}
 	p.setup = function() {
+		builtins.packs[0].cache = defaultlevels.join("\n")
 		p.createCanvas(480, 480)
 		ctx = p.drawingContext
 
