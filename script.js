@@ -39,9 +39,9 @@ peer.on("disconnected", e => {
 	peer.reconnect()
 })
 
-let VERSION = 0.3
+let VERSION = 0.4
 let PATCH = 1
-if (window.location.hostname == "localhost" || window.location.href == "https://pixlperfect01.github.io/not-alone/") {
+if (window.location.hostname == "localhost" || window.location.hostname == 'pixlperfect01.github.io') {
 	VERSION += 999
 }
 if (localStorage.lastver == undefined)
@@ -63,28 +63,40 @@ class SFX {
 	constructor(url) {
 		this.audio = new Audio(url)
 	}
-	play(volume) {
+
+	play() {
 		try {
 			this.audio.currentTime = 0;
 			this.audio.play()
 		} catch (e) { }
 	}
+	loop() {
+		try {
+			this.audio.currentTime = 0;
+			this.audio.loop()
+		} catch (e) { }
+	}
 }
 
+let sfx = {};
+
 // import sounds
-let jumpsfx = new SFX('sounds/jump.wav');
-let landsfx = new SFX('sounds/land.wav');
-let signalsfx = new SFX('sounds/signal.wav');
-let winsfx = new SFX('sounds/sunglasses.wav');
-let selectsfx = new SFX('sounds/select.wav');
-let coinsfx = new SFX('sounds/coin.wav');
-let bouncesfx = new SFX('sounds/trampoline.wav');
-let flysfx = new SFX('sounds/jetpack.wav');
-let getjpsfx = new SFX('sounds/getjp.wav');
-let losejpsfx = new SFX('sounds/losejp.wav');
-let unlocksfx = new SFX('sounds/unlock.wav');
-let keysfx = new SFX('sounds/key.wav');
-let boingsfx = new SFX('sounds/bounce.wav');
+sfx.jump = new SFX('sounds/jump.wav');
+sfx.land = new SFX('sounds/land.wav');
+sfx.signal = new SFX('sounds/signal.wav');
+sfx.win = new SFX('sounds/sunglasses.wav');
+sfx.select = new SFX('sounds/select.wav');
+sfx.coin = new SFX('sounds/coin.wav');
+sfx.bounce = new SFX('sounds/trampoline.wav');
+sfx.fly = new SFX('sounds/jetpack.wav');
+sfx.getjp = new SFX('sounds/getjp.wav');
+sfx.losejp = new SFX('sounds/losejp.wav');
+sfx.unlock = new SFX('sounds/unlock.wav');
+sfx.key = new SFX('sounds/key.wav');
+sfx.boing = new SFX('sounds/bounce.wav');
+
+// import background music
+
 
 let game = {}
 let host = false;
@@ -97,11 +109,14 @@ let npcs;
 let tilesets = {};
 let jetpack;
 
+let currentMusicLevel = 1;
+let currentSFXLevel = 1;
+
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
 let errmsg =
-	`- Fixed crumble blocks not working properly
+	`- Added Background Music!
 
-- Added import/export buttons to the level editor`;
+- Added Volume Controls in the Settings Menu!`;
 let showerr = true;
 if (parseFloat(localStorage.lastver) != VERSION * 100 + PATCH)
 	localStorage.lastver = VERSION * 100 + PATCH
@@ -626,7 +641,7 @@ const g = p => {
 								!(this.down))) {
 							if (left == 167 || right == 167) {
 								this.dy = -Math.abs(this.dy) + 1
-								bouncesfx.play();
+								sfx.bounce.play();
 							} else if (!this.control && right == 227 && this.dy > 0.5) {
 								delete levels[currentLevelX + "," + currentLevelY][rightp]
 								this.dy = -5
@@ -641,7 +656,7 @@ const g = p => {
 								if (conv[right])
 									this.cx += conv[right]
 								if (this.dy > 15)
-									if (!this.control) landsfx.play();
+									if (!this.control) sfx.land.play();
 								this.y = Math.round(this.y / 8) * 8 - 4
 								this.dy = yvbounce[left] || yvbounce[right] || 0
 								if (this.dx == 0)
@@ -649,11 +664,11 @@ const g = p => {
 								else
 									this.frame = [1, 0, 2, 0][this.walkframe % 4]
 								if (yvbounce[left] || yvbounce[right]) {
-									boingsfx.play()
+									sfx.boing.play()
 								} else if (this.jump && !this.jetpack) {
 									this.dy = this.jumpheight;
 									try {
-										if (!this.control) jumpsfx.play();
+										if (!this.control) sfx.jump.play();
 									} catch (e) { }
 								}
 							}
@@ -662,7 +677,7 @@ const g = p => {
 							if (left == 231 && this.keys.length > 0) keyUnlock(leftpos[0], leftpos[1], prefix)
 							if (right == 231 && this.keys.length > 0) keyUnlock(rightpos[0], rightpos[1], prefix)
 							if (player.unlocked) {
-								unlocksfx.play()
+								sfx.unlock.play()
 								player.keys.pop()
 								player.unlocked = false
 							}
@@ -679,7 +694,7 @@ const g = p => {
 							if (left == 231 && this.keys.length > 0) keyUnlock(leftpos[0], leftpos[1], prefix)
 							if (right == 231 && this.keys.length > 0) keyUnlock(rightpos[0], rightpos[1], prefix)
 							if (player.unlocked) {
-								unlocksfx.play()
+								sfx.unlock.play()
 								player.keys.pop()
 								player.unlocked = false
 							}
@@ -702,7 +717,7 @@ const g = p => {
 							if (top == 231 && this.keys.length > 0) keyUnlock(toppos[0], toppos[1], prefix)
 							if (bottom == 231 && this.keys.length > 0) keyUnlock(bottompos[0], bottompos[1], prefix)
 							if (player.unlocked) {
-								unlocksfx.play()
+								sfx.unlock.play()
 								player.keys.pop()
 								player.unlocked = false
 							}
@@ -720,7 +735,7 @@ const g = p => {
 							if (top == 231 && this.keys.length > 0) keyUnlock(toppos[0], toppos[1], prefix)
 							if (bottom == 231 && this.keys.length > 0) keyUnlock(bottompos[0], bottompos[1], prefix)
 							if (player.unlocked) {
-								unlocksfx.play()
+								sfx.unlock.play()
 								player.keys.pop()
 								player.unlocked = false
 							}
@@ -738,24 +753,24 @@ const g = p => {
 					this.sunglasses = true
 					bigtext = "Sunglasses\nGet!"
 					bigtexttime = Date.now() + 3000
-					winsfx.play()
+					sfx.win.play()
 				}
 				if ((ctile == 224) && !this.jetpack) {
 					this.jetpack = true
 					if (this.jump && this.dy > 2) this.dy = 2
-					getjpsfx.play()
+					sfx.getjp.play()
 				}
 				if ((ctile == 225) && this.jetpack) {
 					this.jetpack = false
-					losejpsfx.play()
+					sfx.losejp.play()
 				}
 				if ((ctile == 160 || ctile == 161)) {
 					delete levels[currentLevelX + "," + currentLevelY][ctilep]
-					coinsfx.play()
+					sfx.coin.play()
 				}
 				if (ctile == 230) {
 					delete levels[currentLevelX + "," + currentLevelY][ctilep]
-					keysfx.play()
+					sfx.key.play()
 					// new key at old keypos
 					this.keys.push({
 						x: parseInt(ctilep.split(",")[0])*8+4,
@@ -786,7 +801,7 @@ const g = p => {
 
 	const MPSignal = function(pl, sprite) {
 		try {
-			signalsfx.play();
+			sfx.signal.play();
 		} catch (e) { }
 		this.x = pl.x
 		this.y = pl.y
@@ -921,6 +936,7 @@ const g = p => {
 	let sky_y;
 	let pausemenu;
 	let optionsmenu;
+	let clientSettingsMenu;
 	let levelsmenu;
 	let loadingmenu;
 
@@ -976,10 +992,10 @@ const g = p => {
 		let resumebtn = p.createButton('Resume Game')
 		resumebtn.mouseClicked(() => {
 			pausemenu.hide()
-			signalsfx.play()
+			sfx.signal.play()
 			paused = false
 		})
-		resumebtn.mouseOver(() => selectsfx.play())
+		resumebtn.mouseOver(() => sfx. select.play())
 		pausemenu.child(resumebtn)
 
 		let btnspan = p.createSpan()
@@ -988,14 +1004,14 @@ const g = p => {
 		let optionsbtn = p.createButton('Room Settings')
 		optionsbtn.mouseClicked(() => {
 			pausemenu.hide()
-			signalsfx.play()
+			sfx.signal.play()
 			optionsmenu.elt.style.display = "flex"
 		})
-		optionsbtn.mouseOver(() => selectsfx.play())
+		optionsbtn.mouseOver(() => sfx.select.play())
 		btnspan.child(optionsbtn)
 		if (!host) optionsbtn.elt.disabled = true
 
-		optionsmenu = p.createDiv('<h3>Room Options</h3>')
+		optionsmenu = p.createDiv('<h3>Room Settings</h3>')
 		optionsmenu.class("flashdiv")
 		optionsmenu.position(16, 80)
 		optionsmenu.size(448, 320)
@@ -1045,7 +1061,7 @@ const g = p => {
 				btnswrap.style.gap = "5px"
 
 				let btn = document.createElement("button")
-				btn.onmouseover = () => selectsfx.play()
+				btn.onmouseover = () => sfx.select.play()
 				btn.className = "flexbtn"
 				btn.style.flex = "1"
 				let namespan = document.createElement("span")
@@ -1054,7 +1070,7 @@ const g = p => {
 				btnswrap.appendChild(btn)
 
 				btn.onclick = async () => {
-					signalsfx.play()
+					sfx.signal.play()
 					levelsmenu.hide()
 					if (!e.cache) {
 						loadingmenu.elt.style.display = "flex"
@@ -1097,7 +1113,7 @@ const g = p => {
 					btnswrap.style.gap = "5px"
 
 					let btn = document.createElement("button")
-					btn.onmouseover = () => selectsfx.play()
+					btn.onmouseover = () => sfx.select.play()
 					btn.className = "flexbtn"
 					btn.style.flex = "1"
 					let namespan = document.createElement("span")
@@ -1106,7 +1122,7 @@ const g = p => {
 					btnswrap.appendChild(btn)
 
 					btn.onclick = () => {
-						signalsfx.play()
+						sfx.signal.play()
 						levelsmenu.hide()
 						optionsmenu.elt.style.display = "flex"
 						currentLevelPack = e.split("\n")
@@ -1127,7 +1143,7 @@ const g = p => {
 		let tpallherebtn = p.createButton("Teleport All Here")
 		optionsdiv.child(tpallherebtn)
 		tpallherebtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			if (host) broadcast({
 				type: "setpos",
 				x: player.x,
@@ -1136,7 +1152,7 @@ const g = p => {
 				ry: currentLevelY
 			})
 		})
-		tpallherebtn.mouseOver(() => selectsfx.play())
+		tpallherebtn.mouseOver(() => sfx.select.play())
 		tpallherebtn.style("margin-bottom", "10px")
 
 		let announceinp = p.createInput()
@@ -1146,14 +1162,14 @@ const g = p => {
 		let announcebtn = p.createButton("Announce a message")
 		optionsdiv.child(announcebtn)
 		announcebtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			if (host) broadcast({
 				type: "bigmsg",
 				msg: announceinp.value(),
 				time: 3000,
 			})
 		})
-		announcebtn.mouseOver(() => selectsfx.play())
+		announcebtn.mouseOver(() => sfx.select.play())
 		announcebtn.style("margin-bottom", "10px")
 
 		let roomnameinp = p.createInput()
@@ -1171,11 +1187,11 @@ const g = p => {
 		let roomnamebtn = p.createButton("Change room name")
 		optionsdiv.child(roomnamebtn)
 		roomnamebtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			host = roomnameinp.value()
 			heartbeatfunc()
 		})
-		roomnamebtn.mouseOver(() => selectsfx.play())
+		roomnamebtn.mouseOver(() => sfx.select.play())
 		roomnamebtn.style("margin-bottom", "10px")
 
 		let lvlspan = p.createSpan();
@@ -1185,20 +1201,20 @@ const g = p => {
 		let editorbtn = p.createButton("Open Editor")
 		lvlspan.child(editorbtn)
 		editorbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
 		})
-		editorbtn.mouseOver(() => selectsfx.play())
+		editorbtn.mouseOver(() => sfx.select.play())
 
 		let uploadlvlbtn = p.createButton("Choose level pack")
 		lvlspan.child(uploadlvlbtn)
 		uploadlvlbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			getSavedPacks()
 			levelsmenu.elt.style.display = "flex"
 			optionsmenu.hide()
 		})
-		uploadlvlbtn.mouseOver(() => selectsfx.play())
+		uploadlvlbtn.mouseOver(() => sfx.select.play())
 
 		lvlspan.style("margin-bottom", "10px")
 		optionsdiv.child(lvlspan)
@@ -1209,25 +1225,67 @@ const g = p => {
 		backbtn.style("width", "100px")
 		backbtn.mouseClicked(() => {
 			pausemenu.elt.style.display = "flex"
-			signalsfx.play()
+			sfx.signal.play()
 			optionsmenu.hide()
 		})
-		backbtn.mouseOver(() => selectsfx.play())
+		backbtn.mouseOver(() => sfx.select.play())
 
 		let lvlbackbtn = p.createButton("Back")
 		levelsmenu.child(lvlbackbtn)
 		lvlbackbtn.position(12, 12)
 		lvlbackbtn.style("width", "100px")
 		lvlbackbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			levelsmenu.hide()
-			optionsmenu.elt.style.display = "flex"
+			pausemenu.elt.style.display = "flex"
 		})
-		lvlbackbtn.mouseOver(() => selectsfx.play())
+		lvlbackbtn.mouseOver(() => sfx.select.play())
+
+		let clientSettingsBtn = p.createButton("Client Settings")
+		btnspan.child(clientSettingsBtn)
+		clientSettingsBtn.mouseOver(() => sfx.select.play())
+		clientSettingsBtn.mouseClicked(() => {
+			sfx.signal.play()
+			pausemenu.hide()
+			clientSettingsMenu.elt.style.display = "flex"
+		})
+
+		clientSettingsMenu = p.createDiv('<h3>Client Settings</h3>')
+		clientSettingsMenu.class("flashdiv")
+		clientSettingsMenu.position(16, 80)
+		clientSettingsMenu.size(448, 320)
+
+		let clientSettingsBackBtn = p.createButton("Back")
+		clientSettingsMenu.child(clientSettingsBackBtn)
+		clientSettingsBackBtn.position(12, 12)
+		clientSettingsBackBtn.style("width", "100px")
+		clientSettingsBackBtn.mouseClicked(() => {
+			sfx.signal.play()
+			clientSettingsMenu.hide()
+			pausemenu.elt.style.display = "flex"
+		})
+		lvlbackbtn.mouseOver(() => sfx.select.play())
+
+		let sliderWrappers = p.createDiv()
+		sliderWrappers.style("position", "absolute")
+		sliderWrappers.style("top", "60px")
+		sliderWrappers.style("width", "420px")
+		sliderWrappers.style("overflow", "hidden")
+		sliderWrappers.elt.style.display = "flex"
+		clientSettingsMenu.child(sliderWrappers)
+
+		let musicSliderDesc = p.createSpan('Music')
+		musicSliderDesc.style("margin", "15px")
+		musicSliderDesc.elt.style.display = "flex"
+		sliderWrappers.child(musicSliderDesc)
+		let musicSlider = p.createInput(currentMusicLevel + '', 'range')
+		musicSlider.style("width", "95%")
+		musicSlider.elt.style.display = "flex"
+		sliderWrappers.child(musicSlider)
 
 		let disconnectbtn = p.createButton('Disconnect')
 		disconnectbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			if (conn) {
 				showerr = false
 				conn.close()
@@ -1235,13 +1293,14 @@ const g = p => {
 			} else p.quit()
 		})
 		btnspan.child(disconnectbtn)
-		disconnectbtn.mouseOver(() => selectsfx.play())
+		disconnectbtn.mouseOver(() => sfx.select.play())
 
 		pausemenu.child(btnspan)
 
 		pausemenu.hide();
 		optionsmenu.hide();
 		levelsmenu.hide();
+		clientSettingsMenu.hide();
 	}
 
 	let ingametimer = 0
@@ -1478,6 +1537,7 @@ Signals: ${signals.length}`, 0, 0)
 					pausemenu.elt.style.display = "flex"
 				else
 					pausemenu.hide()
+				clientSettingsMenu.hide()
 				optionsmenu.hide()
 				levelsmenu.hide()
 			}
@@ -1633,10 +1693,10 @@ const m = p => {
 					let room = rooms.lobbies[i]
 					const connID = room.connID
 					let btn = p.createButton("")
-					btn.mouseOver(() => selectsfx.play())
+					btn.mouseOver(() => sfx.select.play())
 					btn.class("flexbtn")
 					btn.mouseClicked(() => {
-						signalsfx.play()
+						sfx.signal.play()
 						if (room.version > VERSION)
 							return showMsgBox("Outdated!", "Your version of the game is out of date, and cannot connect to rooms on version " + VERSION.toFixed(1) + ".0 or above. Consider updating!")
 						showMsgBox("Connecting", "Locating room...", false)
@@ -1722,13 +1782,13 @@ const m = p => {
 		function closemsgbox() {
 			if (msgbox.elt.style.display != "flex") return
 			getRooms()
-			signalsfx.play()
+			sfx.signal.play()
 			msgbox.hide()
 			lobbylist.elt.style.display = "flex"
 			ctrlbuttons.elt.style.display = "flex"
 		}
 		msgboxclose.mouseClicked(closemsgbox)
-		msgboxclose.mouseOver(() => selectsfx.play())
+		msgboxclose.mouseOver(() => sfx.select.play())
 
 		showMsgBox = function(title, message, closebtn = true) {
 			msgboxtitle.innerText = title
@@ -1750,18 +1810,18 @@ const m = p => {
 		editorbtn.position(48, 12)
 		editorbtn.style("width", "100px")
 		editorbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
 		})
-		editorbtn.mouseOver(() => selectsfx.play())
+		editorbtn.mouseOver(() => sfx.select.play())
 
 		helpbtn = p.createButton("?")
 		lobbylist.child(helpbtn)
 		helpbtn.position(12, 12)
 		helpbtn.style("width", "24px")
-		helpbtn.mouseOver(() => selectsfx.play())
+		helpbtn.mouseOver(() => sfx.select.play())
 		helpbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			showMsgBox("Help", `Playing Online
 
 You can play online with other people by selecting a room from the list. You can also host your own room, by typing in a room name and pressing "Host" down at the bottom.
@@ -1784,14 +1844,14 @@ Created by PixlPerfect01 and DTmakesgames`)
 		})
 
 		refreshbtn = p.createButton("Refresh")
-		refreshbtn.mouseOver(() => selectsfx.play())
+		refreshbtn.mouseOver(() => sfx.selects.play())
 		lobbylist.child(refreshbtn)
 		refreshbtn.style("position", "absolute")
 		refreshbtn.style("right", "12px")
 		refreshbtn.style("top", "12px")
 		refreshbtn.style("width", "137px")
 		refreshbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			getRooms()
 		})
 		getRooms()
@@ -1814,7 +1874,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 		})
 
 		hostbtn = p.createButton("Host")
-		hostbtn.mouseOver(() => selectsfx.play())
+		hostbtn.mouseOver(() => sfx.select.play())
 		hostbtn.elt.disabled = true
 		ctrlbuttons.child(hostbtn)
 		hostbtn.style("position", "absolute")
@@ -1822,7 +1882,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 		hostbtn.style("top", "12px")
 		hostbtn.style("width", "50px")
 		hostbtn.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			host = roomname.value()
 			connectid = false
 			game = new p5(g, gamewin)
@@ -1830,12 +1890,12 @@ Created by PixlPerfect01 and DTmakesgames`)
 		})
 
 		singleplayer = p.createButton("Singleplayer")
-		singleplayer.mouseOver(() => selectsfx.play())
+		singleplayer.mouseOver(() => sfx.select.play())
 		ctrlbuttons.child(singleplayer)
 		singleplayer.position(12, 12)
 		singleplayer.style("width", "100px")
 		singleplayer.mouseClicked(() => {
-			signalsfx.play()
+			sfx.signal.play()
 			host = false
 			connectid = false
 			game = new p5(g, gamewin)
