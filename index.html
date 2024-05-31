@@ -17,11 +17,8 @@
 		</div>
 	</div>
     <script>
-	    alert("PLEASE USE THIS LINK: https://pixlperfectstudios.github.io/not-alone/");
-        // basically our school has a keylogger so 
-        // i put this on a lot of the sites i make
-        // its impero and they dont use "addEventListener"
-        // they just do onkeypress for the main part
+		window.ISDEVSERVER = window.location.hostname == "localhost" || window.location.hostname == 'pixlperfect01.github.io'
+	    if (ISDEVSERVER) alert("PLEASE USE THIS LINK: https://pixlperfectstudios.github.io/not-alone/")
     </script>
     <script src="p5.js"></script>
     

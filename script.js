@@ -40,8 +40,8 @@ peer.on("disconnected", e => {
 })
 
 let VERSION = 0.4
-let PATCH = 1
-if (window.location.hostname == "localhost" || window.location.hostname == 'pixlperfect01.github.io') {
+let PATCH = 0
+if (ISDEVSERVER) {
 	VERSION += 999
 }
 if (localStorage.lastver == undefined)
@@ -70,15 +70,57 @@ class SFX {
 			this.audio.play()
 		} catch (e) { }
 	}
+}
+
+class Music {
+	constructor(...urls) {
+		this.audio = urls.map(url => new Audio(url))
+		this.currentplaying = null
+	}
+
+	play() {
+		try {
+			if (this.currentplaying) this.currentplaying.pause()
+			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
+			current.currentTime = 0;
+			current.play()
+			current.volume = 1
+			if (!current.paused) {
+				this.currentplaying = current
+				this.currentplaying.onended = () => {
+					this.currentplaying = null
+				}
+			}
+		} catch (e) {
+			console.warn(e)
+		}
+	}
+
 	loop() {
 		try {
-			this.audio.currentTime = 0;
-			this.audio.loop()
-		} catch (e) { }
+			if (this.currentplaying) this.currentplaying.pause()
+			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
+			current.currentTime = 0;
+			current.play()
+			current.volume = 1
+			current.loop = true
+			if (!current.paused) this.currentplaying = current
+		} catch (e) {
+			console.warn(e)
+		}
+	}
+
+	stop() {
+		try {
+			this.currentplaying.pause()
+			this.currentplaying = null
+		} catch (e) {
+			console.warn(e)
+		}
 	}
 }
 
-let sfx = {};
+const sfx = {};
 
 // import sounds
 sfx.jump = new SFX('sounds/jump.wav');
@@ -95,8 +137,16 @@ sfx.unlock = new SFX('sounds/unlock.wav');
 sfx.key = new SFX('sounds/key.wav');
 sfx.boing = new SFX('sounds/bounce.wav');
 
-// import background music
+const music = {}
+window.music = music
 
+// import background music
+music.grass = new Music("sounds/not_alone_grass_1.mp3");
+music.cave = new Music("sounds/not_alone_cave_1.mp3");
+music.night = new Music("sounds/not_alone_night_1.mp3");
+music.space = new Music("sounds/not_alone_space_1.mp3");
+music.lobby = new Music("sounds/not_alone_lobby_select.mp3");
+music.sunglasses = new Music("sounds/not_alone_sunglasses.mp3");
 
 let game = {}
 let host = false;
@@ -148,6 +198,8 @@ const g = p => {
 
 	quitting = false
 
+	let currentmusictrack
+
 	p.quit = function() {
 		if (host) {
 			fetch("https://ns.jrtech.me/flatline/" + peer.id)
@@ -161,6 +213,7 @@ const g = p => {
 		quitting = true
 		clearInterval(movepacketinterval)
 		clearInterval(heartbeat)
+		if (currentmusictrack) currentmusictrack.stop()
 	}
 
 	let animtimer = 0;
@@ -754,6 +807,10 @@ const g = p => {
 					bigtext = "Sunglasses\nGet!"
 					bigtexttime = Date.now() + 3000
 					sfx.win.play()
+					if (currentmusictrack) currentmusictrack.stop()
+					currentmusictrack = music.sunglasses
+					chanceofmusic = 0
+					currentmusictrack.play()
 				}
 				if ((ctile == 224) && !this.jetpack) {
 					this.jetpack = true
@@ -952,9 +1009,15 @@ const g = p => {
 		currentLevelY = 0
 		sky_y = -720;
 		player = new Player(START_TILE.x * 8, START_TILE.y * 8);
+		if (currentmusictrack) currentmusictrack.stop()
+		chanceofmusic = 0
 	}
 
+	let chanceofmusic = 0
+
 	p.setup = function() {
+		chanceofmusic = 0
+		music.lobby.stop()
 		loadLevels(defaultlevels)
 		p.frameRate(60);
 		p.createCanvas(240 * SCALE, 240 * SCALE);
@@ -1172,6 +1235,21 @@ const g = p => {
 		announcebtn.mouseOver(() => sfx.select.play())
 		announcebtn.style("margin-bottom", "10px")
 
+		let jetpackbtn = p.createButton("Toggle jetpack")
+		if (ISDEVSERVER && false) optionsdiv.child(jetpackbtn)
+		jetpackbtn.mouseClicked(() => {
+			sfx.signal.play()
+			if (player.jetpack) {
+				sfx.losejp.play()
+				player.jetpack = false
+			} else {
+				sfx.getjp.play()
+				player.jetpack = true
+			}
+		})
+		jetpackbtn.mouseOver(() => sfx.select.play())
+		jetpackbtn.style("margin-bottom", "10px")
+
 		let roomnameinp = p.createInput()
 		roomnameinp.elt.placeholder = "Room name"
 		roomnameinp.elt.value = host
@@ -1306,6 +1384,45 @@ const g = p => {
 	let ingametimer = 0
 
 	p.draw = function() {
+		// handle music playing
+		let preferredmusic
+		if (currentLevelY > -7) {
+			preferredmusic = music.grass
+		} else if (currentLevelY > -9) {
+			preferredmusic = music.cave
+		} else if (currentLevelY > -13) {
+			preferredmusic = music.night
+		} else if (currentLevelY > -16) {
+			preferredmusic = music.space
+		} else {
+			preferredmusic = null
+		}
+		if ((!currentmusictrack || !currentmusictrack.currentplaying) && preferredmusic) {
+			chanceofmusic = chanceofmusic + 0.00001
+		} else if (currentmusictrack && currentmusictrack.currentplaying) {
+			if (currentmusictrack != preferredmusic && currentmusictrack != music.sunglasses) {
+				let newvol = currentmusictrack.currentplaying.volume
+				newvol -= 0.001
+				if (newvol <= 0) {
+					currentmusictrack = null
+				} else {
+					currentmusictrack.currentplaying.volume = newvol
+				}
+			} else {
+				let newvol = currentmusictrack.currentplaying.volume
+				newvol += 0.001
+				if (newvol < 1) {
+					currentmusictrack.currentplaying.volume = newvol
+				} else {
+					currentmusictrack.currentplaying.volume = 1
+				}
+			}
+		}
+		if (Math.random() < chanceofmusic && preferredmusic) {
+			currentmusictrack = preferredmusic
+			currentmusictrack.play()
+			chanceofmusic = 0
+		}
 		//update
 		player.update();
 		//fuqer.update();	
@@ -1920,6 +2037,9 @@ Created by PixlPerfect01 and DTmakesgames`)
 	let bgx = Math.floor(Math.random()*2)*240
 	let bgy = Math.floor(Math.random()*2)*120
 	p.draw = function() {
+		if (!music.lobby.currentplaying) {
+			music.lobby.loop()
+		}
 		bgpos = (bgpos + 0.125) % 240
 		p.scale(2)
 		p.noSmooth()
