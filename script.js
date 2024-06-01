@@ -1516,7 +1516,7 @@ const g = p => {
 			preferredmusic = null
 		}
 		if ((!currentmusictrack || !currentmusictrack.currentplaying) && preferredmusic) {
-			chanceofmusic = chanceofmusic + 0.00001
+			chanceofmusic = chanceofmusic + 0.000001
 		} else if (currentmusictrack && currentmusictrack.currentplaying) {
 			if (currentmusictrack != preferredmusic && currentmusictrack != music.sunglasses) {
 				let newvol = currentmusictrack.volume
