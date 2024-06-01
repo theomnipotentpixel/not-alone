@@ -227,6 +227,10 @@ let errmsg =
 
 - Added playing custom maps in single player
 
+- You can now press R to reset the current map
+
+- Added some more host settings
+
 - Fixed a bug where losing connection to the signalling server would kick you from the game, even in single player
 
 - Fixed multiple visual bugs`;
