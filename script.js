@@ -585,7 +585,7 @@ const g = p => {
 				tilesets[packet.id] = p.loadImage(packet.url);
 		}
 		if (packet.type == "setting") {
-			if (typeof packet.communication !== "boolean") hostsettings.communication = packet.communication
+			if (typeof packet.communication === "boolean") hostsettings.communication = packet.communication
 		}
 	}
 
