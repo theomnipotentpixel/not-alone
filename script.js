@@ -379,6 +379,9 @@ const g = p => {
 							type: "levelpack",
 							levelpack: currentLevelPack
 						}))
+						conn.send(JSON.stringify(Object.assign({
+							type: "setting"
+						}, hostsettings)))
 					}
 					let players = Object.keys(clients).length
 					broadcast({
@@ -1371,6 +1374,10 @@ const g = p => {
 		hostsettings.communication = true
 		addCheckboxOption("Allow signalling:", v => {
 			hostsettings.communication = v
+			broadcast({
+				type: "setting",
+				communication: v,
+			})
 		}, true)
 
 		hostsettings.canreset = true
