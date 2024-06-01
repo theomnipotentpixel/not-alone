@@ -4,8 +4,12 @@
 * {
     box-sizing: border-box;
 	color: white;
-	scrollbar-color: #0007 #fff2;
-	scrollbar-width: thin;
+}
+@supports not selector(::-webkit-scrollbar) {
+	* {
+		scrollbar-color: #0007 #fff2;
+		scrollbar-width: thin;
+	}
 }
 .hide {
 	display: none;

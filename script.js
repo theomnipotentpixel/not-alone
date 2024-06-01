@@ -5,7 +5,6 @@ let gamewin = document.getElementById("gamewin");
 
 let peer = new Peer();
 let conn = false;
-let islobbyselector = false
 
 let editorData = {
 	f: 4
@@ -13,7 +12,39 @@ let editorData = {
 
 let settings = {
 	swapJumpAndTalk: false,
+	music: 1, // making these numbers for the future
+	sfx: 1,
 }
+
+if (localStorage.notalonesettings) {
+	const s = JSON.parse(localStorage.notalonesettings)
+	Object.assign(settings, s)
+}
+
+// build settings div globally, that way you can access them anywhere
+let settingsDiv = document.createElement("div")
+
+function savesettings() {
+	localStorage.notalonesettings = JSON.stringify(settings)
+}
+
+function addCheckboxSetting(label, onchange, state=false) {
+	const eLabel = document.createElement("label")
+	eLabel.innerText = label + " "
+	const checkbox = document.createElement("input")
+	checkbox.type = "checkbox"
+	eLabel.append(checkbox)
+	const eP = document.createElement("p")
+	eP.append(eLabel)
+	settingsDiv.append(eP)
+	checkbox.checked = state
+	checkbox.onchange = e=>{
+		onchange(checkbox.checked)
+		savesettings()
+	}
+}
+
+addCheckboxSetting("Swap up arrow and space bar:", v => settings.swapJumpAndTalk = v, settings.swapJumpAndTalk)
 
 let button_npcTalk = 38;
 let button_jump = 32;
@@ -67,6 +98,7 @@ class SFX {
 
 	play() {
 		try {
+			this.audio.volume = settings.sfx
 			this.audio.currentTime = 0;
 			this.audio.play()
 		} catch (e) { }
@@ -77,6 +109,14 @@ class Music {
 	constructor(...urls) {
 		this.audio = urls.map(url => new Audio(url))
 		this.currentplaying = null
+		this.volume = 1
+	}
+
+	setVolume(v) {
+		this.volume = v
+		for (let i = 0; i < this.audio.length; i++) {
+			this.audio[i].volume = v * settings.music
+		}
 	}
 
 	play() {
@@ -85,7 +125,8 @@ class Music {
 			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
 			current.currentTime = 0;
 			current.play()
-			current.volume = 1
+			this.volume = 1
+			current.volume = settings.music
 			if (!current.paused) {
 				this.currentplaying = current
 				this.currentplaying.onended = () => {
@@ -103,7 +144,8 @@ class Music {
 			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
 			current.currentTime = 0;
 			current.play()
-			current.volume = 1
+			this.volume = 1
+			current.volume = settings.music
 			current.loop = true
 			if (!current.paused) this.currentplaying = current
 		} catch (e) {
@@ -149,6 +191,14 @@ music.space = new Music("sounds/not_alone_space_1.mp3");
 music.lobby = new Music("sounds/not_alone_lobby_select.mp3");
 music.sunglasses = new Music("sounds/not_alone_sunglasses.mp3");
 
+addCheckboxSetting("Music:", v => {
+	settings.music = +v
+	for (const [k, v] of Object.entries(music)) {
+		v.setVolume(v.volume)
+	}
+}, !!settings.music)
+addCheckboxSetting("Sound effects:", v => settings.sfx = +v, !!settings.sfx)
+
 let game = {}
 let host = false;
 
@@ -165,9 +215,21 @@ let currentSFXLevel = 1;
 
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
 let errmsg =
-	`- Added Background Music!
+	`- Added music for the main menu
 
-- Added Volume Controls in the Settings Menu!`;
+- Added 5 new background music tracks
+
+- Added a new settings menu with volume controls and the ability to swap up arrow with space in the controls
+
+- Added full pausing in single player
+
+- Added a main menu and map select
+
+- Added playing custom maps in single player
+
+- Fixed a bug where losing connection to the signalling server would kick you from the game, even in single player
+
+- Fixed multiple visual bugs`;
 let showerr = true;
 if (parseFloat(localStorage.lastver) != VERSION * 100 + PATCH)
 	localStorage.lastver = VERSION * 100 + PATCH
@@ -189,6 +251,7 @@ Pressing 0-9 on your keyboard will send the corresponding signal`;
 // ex: p.loadImage("fuqer.png");
 
 let quitting = false
+let currentLevelPack;
 
 const g = p => {
 
@@ -223,7 +286,6 @@ const g = p => {
 
 	let levels;
 
-	let currentLevelPack;
 	let blinkon = 0;
 	let moved = false;
 	let paused = false;
@@ -1024,7 +1086,7 @@ const g = p => {
 	p.setup = function() {
 		chanceofmusic = 0
 		music.lobby.stop()
-		loadLevels(defaultlevels)
+		loadLevels(currentLevelPack || defaultlevels)
 		p.frameRate(60);
 		p.createCanvas(240 * SCALE, 240 * SCALE);
 		ctx = p.drawingContext;
@@ -1066,21 +1128,26 @@ const g = p => {
 		})
 		resumebtn.mouseOver(() => sfx. select.play())
 		pausemenu.child(resumebtn)
+		
+		if (host) {
+			let optionsbtn = p.createButton('Host Settings')
+			optionsbtn.mouseClicked(() => {
+				pausemenu.hide()
+				sfx.signal.play()
+				optionsmenu.elt.style.display = "flex"
+			})
+			optionsbtn.mouseOver(() => sfx.select.play())
+			optionsbtn.size(100, 24)
+			optionsbtn.position(12, 12)
+			optionsbtn.elt.style.left = null
+			optionsbtn.elt.style.right = "12px"
+			pausemenu.child(optionsbtn)
+		}
 
 		let btnspan = p.createSpan()
 		btnspan.style("display", "flex")
 
-		let optionsbtn = p.createButton('Room Settings')
-		optionsbtn.mouseClicked(() => {
-			pausemenu.hide()
-			sfx.signal.play()
-			optionsmenu.elt.style.display = "flex"
-		})
-		optionsbtn.mouseOver(() => sfx.select.play())
-		btnspan.child(optionsbtn)
-		if (!host) optionsbtn.elt.disabled = true
-
-		optionsmenu = p.createDiv('<h3>Room Settings</h3>')
+		optionsmenu = p.createDiv('<h3>Host Settings</h3>')
 		optionsmenu.class("flashdiv")
 		optionsmenu.position(16, 80)
 		optionsmenu.size(448, 320)
@@ -1100,7 +1167,7 @@ const g = p => {
 		loadingdiv.style("padding", "12px")
 		loadingdiv.child(document.createTextNode("Loading..."))
 
-		levelsmenu = p.createDiv('<h3>Level Packs</h3>')
+		levelsmenu = p.createDiv('<h3>Your Custom Maps</h3>')
 		levelsmenu.class("flashdiv")
 		levelsmenu.position(16, 80)
 		levelsmenu.size(448, 320)
@@ -1118,7 +1185,7 @@ const g = p => {
 			span.style.height = "100%"
 			lvlpacks = JSON.parse(localStorage.lvlpacks)
 			// built in packs
-			span.innerHTML = "Official Level Packs<span><hr></span>"
+			span.innerHTML = "Official Maps<span><hr></span>"
 			let btnspan = document.createElement("span")
 			btnspan.style.flex = "auto 1 0%"
 			btnspan.style.overflow = "auto"
@@ -1165,7 +1232,7 @@ const g = p => {
 					hrspan.append(document.createElement("hr"))
 					span.append(hrspan)
 				}
-				span.append(document.createTextNode("Custom Level Packs"))
+				span.append(document.createTextNode("Your Custom Maps"))
 				{
 					let hrspan = document.createElement("span")
 					hrspan.append(document.createElement("hr"))
@@ -1241,20 +1308,22 @@ const g = p => {
 		announcebtn.mouseOver(() => sfx.select.play())
 		announcebtn.style("margin-bottom", "10px")
 
-		let jetpackbtn = p.createButton("Toggle jetpack")
-		if (ISDEVSERVER && false) optionsdiv.child(jetpackbtn)
-		jetpackbtn.mouseClicked(() => {
-			sfx.signal.play()
-			if (player.jetpack) {
-				sfx.losejp.play()
-				player.jetpack = false
-			} else {
-				sfx.getjp.play()
-				player.jetpack = true
-			}
-		})
-		jetpackbtn.mouseOver(() => sfx.select.play())
-		jetpackbtn.style("margin-bottom", "10px")
+		if (ISDEVSERVER && false) {
+			let jetpackbtn = p.createButton("Toggle jetpack")
+			optionsdiv.child(jetpackbtn)
+			jetpackbtn.mouseClicked(() => {
+				sfx.signal.play()
+				if (player.jetpack) {
+					sfx.losejp.play()
+					player.jetpack = false
+				} else {
+					sfx.getjp.play()
+					player.jetpack = true
+				}
+			})
+			jetpackbtn.mouseOver(() => sfx.select.play())
+			jetpackbtn.style("margin-bottom", "10px")
+		}
 
 		let roomnameinp = p.createInput()
 		roomnameinp.elt.placeholder = "Room name"
@@ -1286,7 +1355,7 @@ const g = p => {
 		lvlspan.child(editorbtn)
 		editorbtn.mouseClicked(() => {
 			sfx.signal.play()
-			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
+			window.open("editor/edit.html", "notaloneeditor", "popup=true,width=586,height=622").editorData = editorData
 		})
 		editorbtn.mouseOver(() => sfx.select.play())
 
@@ -1321,11 +1390,11 @@ const g = p => {
 		lvlbackbtn.mouseClicked(() => {
 			sfx.signal.play()
 			levelsmenu.hide()
-			pausemenu.elt.style.display = "flex"
+			optionsmenu.elt.style.display = "flex"
 		})
 		lvlbackbtn.mouseOver(() => sfx.select.play())
 
-		let clientSettingsBtn = p.createButton("Client Settings")
+		let clientSettingsBtn = p.createButton("Settings")
 		btnspan.child(clientSettingsBtn)
 		clientSettingsBtn.mouseOver(() => sfx.select.play())
 		clientSettingsBtn.mouseClicked(() => {
@@ -1333,41 +1402,30 @@ const g = p => {
 			pausemenu.hide()
 			clientSettingsMenu.elt.style.display = "flex"
 		})
-
-		clientSettingsMenu = p.createDiv('<h3>Client Settings</h3>')
+		
+		clientSettingsMenu = p.createDiv('<h3>Settings</h3>')
 		clientSettingsMenu.class("flashdiv")
 		clientSettingsMenu.position(16, 80)
 		clientSettingsMenu.size(448, 320)
 
-		let clientSettingsBackBtn = p.createButton("Back")
-		clientSettingsMenu.child(clientSettingsBackBtn)
-		clientSettingsBackBtn.position(12, 12)
-		clientSettingsBackBtn.style("width", "100px")
-		clientSettingsBackBtn.mouseClicked(() => {
+		clientSettingsMenu.child(settingsDiv)
+		settingsDiv.style.display = "block"
+		clientSettingsMenu.style("padding", "12px")
+
+		let clientSettingsBackbtn = p.createButton("Back")
+		clientSettingsMenu.child(clientSettingsBackbtn)
+		clientSettingsBackbtn.position(12, 12)
+		clientSettingsBackbtn.style("width", "100px")
+		clientSettingsBackbtn.mouseClicked(() => {
+			pausemenu.elt.style.display = "flex"
 			sfx.signal.play()
 			clientSettingsMenu.hide()
-			pausemenu.elt.style.display = "flex"
 		})
-		lvlbackbtn.mouseOver(() => sfx.select.play())
+		clientSettingsBackbtn.mouseOver(() => sfx.select.play())
 
-		let sliderWrappers = p.createDiv()
-		sliderWrappers.style("position", "absolute")
-		sliderWrappers.style("top", "60px")
-		sliderWrappers.style("width", "420px")
-		sliderWrappers.style("overflow", "hidden")
-		sliderWrappers.elt.style.display = "flex"
-		clientSettingsMenu.child(sliderWrappers)
+		const singleplayer = !connectid && !host
 
-		let musicSliderDesc = p.createSpan('Music')
-		musicSliderDesc.style("margin", "15px")
-		musicSliderDesc.elt.style.display = "flex"
-		sliderWrappers.child(musicSliderDesc)
-		let musicSlider = p.createInput(currentMusicLevel + '', 'range')
-		musicSlider.style("width", "95%")
-		musicSlider.elt.style.display = "flex"
-		sliderWrappers.child(musicSlider)
-
-		let disconnectbtn = p.createButton('Disconnect')
+		let disconnectbtn = p.createButton(singleplayer ? "Quit to Menu" : 'Disconnect')
 		disconnectbtn.mouseClicked(() => {
 			sfx.signal.play()
 			if (conn) {
@@ -1407,20 +1465,20 @@ const g = p => {
 			chanceofmusic = chanceofmusic + 0.00001
 		} else if (currentmusictrack && currentmusictrack.currentplaying) {
 			if (currentmusictrack != preferredmusic && currentmusictrack != music.sunglasses) {
-				let newvol = currentmusictrack.currentplaying.volume
+				let newvol = currentmusictrack.volume
 				newvol -= 0.001
 				if (newvol <= 0) {
 					currentmusictrack = null
 				} else {
-					currentmusictrack.currentplaying.volume = newvol
+					currentmusictrack.setVolume(newvol)
 				}
 			} else {
-				let newvol = currentmusictrack.currentplaying.volume
+				let newvol = currentmusictrack.volume
 				newvol += 0.001
 				if (newvol < 1) {
-					currentmusictrack.currentplaying.volume = newvol
+					currentmusictrack.setVolume(newvol)
 				} else {
-					currentmusictrack.currentplaying.volume = 1
+					currentmusictrack.setVolume(1)
 				}
 			}
 		}
@@ -1803,6 +1861,7 @@ const m = p => {
 	let lobbylist;
 	let mainmenu;
 	let ctrlbuttons; // >:(
+	let islobbyselector = false;
 	let hostbtn;
 	let singleplayer;
 	let multiplayer;
@@ -1810,6 +1869,7 @@ const m = p => {
 	let refreshbtn;
 	let mainmenubtn;
 	let editorbtn;
+	let settingsbtn;
 	let helpbtn;
 	let roomname;
 	let msgbox;
@@ -1890,13 +1950,16 @@ const m = p => {
 		if (!builtins) builtins = p.loadJSON("levelpacks/builtins.json")
 	}
 	p.setup = function() {
+
 		builtins.packs[0].cache = defaultlevels.join("\n")
 		p.createCanvas(480, 480)
 		ctx = p.drawingContext
 
+		currentLevelPack = null
+
 		mainmenu = p.createDiv()
 		mainmenu.position(60, 200)
-		mainmenu.size(200, 160)
+		mainmenu.size(200, 190)
 		mainmenu.class("flashdiv")
 
 		lobbylist = p.createDiv('<h2>Rooms</h2>')
@@ -1914,6 +1977,7 @@ const m = p => {
 
 		let msgboxdiv = document.createElement("div")
 		msgbox.child(msgboxdiv)
+		msgbox.child(settingsDiv)
 
 		let msgboxclose = p.createButton("Close")
 		msgbox.child(msgboxclose)
@@ -1938,6 +2002,8 @@ const m = p => {
 		showMsgBox = function(title, message, closebtn = true) {
 			msgboxtitle.innerText = title
 			msgboxdiv.innerText = message
+			settingsDiv.style.display = "none"
+			msgboxdiv.style.display = "block"
 			lobbylist.hide()
 			ctrlbuttons.hide()
 			mainmenu.hide()
@@ -1945,6 +2011,17 @@ const m = p => {
 				msgboxclose.show()
 			else
 				msgboxclose.hide()
+			msgbox.elt.style.display = "flex"
+		}
+
+		let showSettingsBox = function() {
+			msgboxtitle.innerText = "Settings"
+			settingsDiv.style.display = "block"
+			msgboxdiv.style.display = "none"
+			lobbylist.hide()
+			ctrlbuttons.hide()
+			mainmenu.hide()
+			msgboxclose.show()
 			msgbox.elt.style.display = "flex"
 		}
 
@@ -2017,12 +2094,107 @@ const m = p => {
 		singleplayer.mouseOver(() => sfx.select.play())
 		mainmenu.child(singleplayer)
 		singleplayer.style("width", "100%")
+		// singleplayer.mouseClicked(() => {
+		// 	sfx.signal.play()
+		// 	host = false
+		// 	connectid = false
+		// 	game = new p5(g, gamewin)
+		// 	p.remove()
+		// })
 		singleplayer.mouseClicked(() => {
 			sfx.signal.play()
-			host = false
-			connectid = false
-			game = new p5(g, gamewin)
-			p.remove()
+			showMsgBox("Maps", "")
+			lvlpacks = JSON.parse(localStorage.lvlpacks)
+			// built in packs
+			let btnspan = document.createElement("span")
+			btnspan.style.flex = "auto 1 0%"
+			btnspan.style.overflow = "auto"
+			btnspan.style.display = "flex"
+			btnspan.style.flexDirection = "column"
+			builtins.packs.forEach((e, i) => {
+				let btnswrap = document.createElement("span")
+				btnswrap.style.display = "flex"
+				btnswrap.style.gap = "5px"
+
+				let btn = document.createElement("button")
+				btn.onmouseover = () => sfx.select.play()
+				btn.style.flexDirection = "column"
+				btn.style.padding = "10px"
+				btn.style.textAlign = "left"
+				btn.style.flex = "1"
+				let namespan = document.createElement("h2")
+				namespan.innerText = e.name
+				btn.appendChild(namespan)
+				let authorspan = document.createElement("h4")
+				authorspan.innerText = "by "+e.author
+				btn.appendChild(authorspan)
+				let descspan = document.createElement("span")
+				descspan.innerText = e.description
+				btn.appendChild(descspan)
+				btnswrap.appendChild(btn)
+
+				btn.onclick = async () => {
+					sfx.signal.play()
+					if (!e.cache) {
+						loadingmenu.elt.style.display = "flex"
+						let c = await (await fetch(e.url)).text()
+						e.cache = c
+						loadingmenu.hide()
+					}
+					currentLevelPack = e.cache.split("\n")
+					host = false
+					connectid = false
+					game = new p5(g, gamewin)
+					p.remove()
+				}
+
+				btnspan.appendChild(btnswrap)
+			})
+			msgboxdiv.appendChild(btnspan)
+			if (lvlpacks.length > 0) {
+				{
+					let hrspan = document.createElement("span")
+					hrspan.append(document.createElement("hr"))
+					msgboxdiv.append(hrspan)
+				}
+				msgboxdiv.append(document.createTextNode("Your Custom Maps"))
+				{
+					let hrspan = document.createElement("span")
+					hrspan.append(document.createElement("hr"))
+					msgboxdiv.append(hrspan)
+				}
+				let btnspan = document.createElement("span")
+				btnspan.style.flex = "1"
+				btnspan.style.overflow = "auto"
+				btnspan.style.display = "flex"
+				btnspan.style.flexDirection = "column"
+				lvlpacks.forEach((e, i) => {
+					let btnswrap = document.createElement("span")
+					btnswrap.style.display = "flex"
+					btnswrap.style.gap = "5px"
+
+					let btn = document.createElement("button")
+					btn.onmouseover = () => sfx.select.play()
+					btn.className = "flexbtn"
+					btn.style.flex = "1"
+					let namespan = document.createElement("span")
+					namespan.innerText = `(${i + 1}) ` + e.split(/\r?\n/gm)[3]
+					btn.appendChild(namespan)
+					btnswrap.appendChild(btn)
+
+					btn.onclick = () => {
+						sfx.signal.play()
+						currentLevelPack = e.split("\n")
+						host = false
+						connectid = false
+						game = new p5(g, gamewin)
+						p.remove()
+					}
+
+					btnspan.appendChild(btnswrap)
+				})
+				msgboxdiv.appendChild(btnspan)
+			}
 		})
 
 		mainmenu.child(p.createP())
@@ -2047,9 +2219,20 @@ const m = p => {
 		editorbtn.style("width", "100%")
 		editorbtn.mouseClicked(() => {
 			sfx.signal.play()
-			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
+			window.open("editor/edit.html", "notaloneeditor", "popup=true,width=586,height=622").editorData = editorData
 		})
 		editorbtn.mouseOver(() => sfx.select.play())
+
+		mainmenu.child(p.createP())
+
+		settingsbtn = p.createButton("Settings")
+		mainmenu.child(settingsbtn)
+		settingsbtn.style("width", "100%")
+		settingsbtn.mouseOver(() => sfx.select.play())
+		settingsbtn.mouseClicked(() => {
+			sfx.signal.play()
+			showSettingsBox()
+		})
 
 		mainmenu.child(p.createP())
 
@@ -2117,7 +2300,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 		p.image(bg, -bgpos, 0, 240, 120, bgx, bgy, 240, 120)
 		p.image(bg, -bgpos+240, 0, 240, 120, bgx, bgy, 240, 120)
 		if (islobbyselector || msgbox.elt.style.display != "none") {
-			ctx.filter = "blur(10px)"
+			ctx.filter = "blur(5px)"
 		} else {
 			ctx.filter = "blur(3px)"
 		}

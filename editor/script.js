@@ -129,10 +129,10 @@ Use SHIFT + WASD to switch level segments
 Hold E to activate the eraser
 Ctrl+Click to set player spawn position (only in 0,0)
 
-Export downloads the current level pack
-Import loads a level pack from your computer
-Press Save to save a level pack
-Press Load to load a level pack
+Export downloads the current map
+Import loads a map from your computer
+Press Save to save a map
+Press Load to load a map
 Use the dropdown to switch levels
 Press + to add a new level and × to delete the current one
 Press Dialogue to set npc dialogue`

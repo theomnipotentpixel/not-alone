@@ -5,8 +5,12 @@
 * {
     box-sizing: border-box;
 	color: white;
-	scrollbar-color: #07070777 #fff2;
-	scrollbar-width: thin;
+}
+@supports not selector(::-webkit-scrollbar) {
+	* {
+		scrollbar-color: #07070777 #fff2;
+		scrollbar-width: thin;
+	}
 }
 html, body {
     height: 100%;
@@ -126,6 +130,14 @@ html, body {
 }
 .flashdiv hr {
 	border: 1px solid #fff3;
+}
+.flashdiv button * {
+	pointer-events: none;
+}
+.flashdiv input[type=checkbox] {
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
 }
 h1,h2,h3,h4,h5,h6,p {
 	filter: drop-shadow(0 0 3px #07070777);
