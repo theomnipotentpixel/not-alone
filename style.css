@@ -60,7 +60,13 @@ html, body {
 	justify-content: center;
 }
 .flashdiv {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	white-space: pre-wrap;
 	overflow: hidden;
+}
+.flashdiv:not(.stylent) {
 	border-radius: 10px;
     box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(255,255,255,0.25), inset -0.2em -0.2em 0.1em 0 rgba(0,0,0,0.5);
 	background: repeating-linear-gradient(
@@ -72,11 +78,7 @@ html, body {
 	);
 	border: 1px solid #070707bb;
 	filter: drop-shadow(0 0 3px #07070777);
-	position: relative;
 	padding: 12px;
-	display: flex;
-	flex-direction: column;
-	white-space: pre-wrap;
 }
 .flashdiv div {
 	border-radius: 5px;

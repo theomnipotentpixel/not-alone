@@ -5,6 +5,7 @@ let gamewin = document.getElementById("gamewin");
 
 let peer = new Peer();
 let conn = false;
+let islobbyselector = false
 
 let editorData = {
 	f: 4
@@ -1428,17 +1429,24 @@ const g = p => {
 			currentmusictrack.play()
 			chanceofmusic = 0
 		}
+		// get paused state
+		const offlinepause = !host && !connectid && paused
 		//update
-		player.update();
+		if (!offlinepause) {
+			player.update();
+			animtimer += 1;
+			panimtimer += 1;
+			if (animtimer >= 5) {
+				animtimer = 0
+				player.walkframe += 1
+				blinkon = (blinkon + 1) % 4
+			}
+		} else {
+			animtimer = 1;
+			panimtimer = 1;
+		}
 		//fuqer.update();	
 		sky_y = currentLevelY * -36 - 720;
-		animtimer += 1;
-		panimtimer += 1;
-		if (animtimer >= 5) {
-			animtimer = 0
-			player.walkframe += 1
-			blinkon = (blinkon + 1) % 4
-		}
 		// draw
 		ctx.globalAlpha = 1
 		p.noSmooth();
@@ -1471,7 +1479,7 @@ const g = p => {
 		p.stroke("#000");
 		p.strokeWeight(0.5);
 
-		if (moved) ingametimer += p.deltaTime
+		if (moved && !offlinepause) ingametimer += p.deltaTime
 		p.textSize(9);
 		p.textAlign(p.CENTER, p.TOP);
 		p.text(getTimer(ingametimer), 120, 8);
@@ -1793,11 +1801,14 @@ const m = p => {
 	}
 	let ctx;
 	let lobbylist;
+	let mainmenu;
 	let ctrlbuttons; // >:(
 	let hostbtn;
 	let singleplayer;
+	let multiplayer;
 	let roomsdiv;
 	let refreshbtn;
+	let mainmenubtn;
 	let editorbtn;
 	let helpbtn;
 	let roomname;
@@ -1883,6 +1894,11 @@ const m = p => {
 		p.createCanvas(480, 480)
 		ctx = p.drawingContext
 
+		mainmenu = p.createDiv()
+		mainmenu.position(60, 200)
+		mainmenu.size(200, 160)
+		mainmenu.class("flashdiv")
+
 		lobbylist = p.createDiv('<h2>Rooms</h2>')
 		lobbylist.class("flashdiv")
 		lobbylist.position(16, 48)
@@ -1906,8 +1922,15 @@ const m = p => {
 			getRooms()
 			sfx.signal.play()
 			msgbox.hide()
-			lobbylist.elt.style.display = "flex"
-			ctrlbuttons.elt.style.display = "flex"
+			if (islobbyselector) {
+				lobbylist.elt.style.display = "flex"
+				ctrlbuttons.elt.style.display = "flex"
+				mainmenu.elt.style.display = "none"
+			} else {
+				lobbylist.elt.style.display = "none"
+				ctrlbuttons.elt.style.display = "none"
+				mainmenu.elt.style.display = "flex"
+			}
 		}
 		msgboxclose.mouseClicked(closemsgbox)
 		msgboxclose.mouseOver(() => sfx.select.play())
@@ -1917,6 +1940,7 @@ const m = p => {
 			msgboxdiv.innerText = message
 			lobbylist.hide()
 			ctrlbuttons.hide()
+			mainmenu.hide()
 			if (closebtn)
 				msgboxclose.show()
 			else
@@ -1927,42 +1951,19 @@ const m = p => {
 		roomsdiv = p.createDiv()
 		lobbylist.child(roomsdiv)
 
-		editorbtn = p.createButton("Open Editor")
-		lobbylist.child(editorbtn)
-		editorbtn.position(48, 12)
-		editorbtn.style("width", "100px")
-		editorbtn.mouseClicked(() => {
+		mainmenubtn = p.createButton("Main Menu")
+		mainmenubtn.mouseOver(() => sfx.select.play())
+		lobbylist.child(mainmenubtn)
+		mainmenubtn.style("position", "absolute")
+		mainmenubtn.style("left", "12px")
+		mainmenubtn.style("top", "12px")
+		mainmenubtn.style("width", "137px")
+		mainmenubtn.mouseClicked(() => {
 			sfx.signal.play()
-			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
-		})
-		editorbtn.mouseOver(() => sfx.select.play())
-
-		helpbtn = p.createButton("?")
-		lobbylist.child(helpbtn)
-		helpbtn.position(12, 12)
-		helpbtn.style("width", "24px")
-		helpbtn.mouseOver(() => sfx.select.play())
-		helpbtn.mouseClicked(() => {
-			sfx.signal.play()
-			showMsgBox("Help", `Playing Online
-
-You can play online with other people by selecting a room from the list. You can also host your own room, by typing in a room name and pressing "Host" down at the bottom.
-
-If you have a bad connection, or just don't want to deal with other people, you can click "Singleplayer" to play singleplayer.
-
-If no rooms are showing up for you, try pressing "Refresh" to reload the list.
-
-
-
-In-game Controls:
-
-${htpDefault}
-
-Credits:
-
-Made with PeerJS and P5
-
-Created by PixlPerfect01 and DTmakesgames`)
+			lobbylist.elt.style.display = "none"
+			ctrlbuttons.elt.style.display = "none"
+			mainmenu.elt.style.display = "flex"
+			islobbyselector = false
 		})
 
 		refreshbtn = p.createButton("Refresh")
@@ -1976,6 +1977,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 			sfx.signal.play()
 			getRooms()
 		})
+
 		getRooms()
 
 		ctrlbuttons = p.createDiv('')
@@ -1985,8 +1987,8 @@ Created by PixlPerfect01 and DTmakesgames`)
 
 		roomname = p.createInput("")
 		ctrlbuttons.child(roomname)
-		roomname.position(120, 12)
-		roomname.style("width", "256px")
+		roomname.position(10, 12)
+		roomname.style("width", "366px")
 		roomname.elt.placeholder = "Room name"
 		roomname.input(() => {
 			if (roomname.value().replace(/\s/gm, "").length > 0)
@@ -2013,9 +2015,8 @@ Created by PixlPerfect01 and DTmakesgames`)
 
 		singleplayer = p.createButton("Singleplayer")
 		singleplayer.mouseOver(() => sfx.select.play())
-		ctrlbuttons.child(singleplayer)
-		singleplayer.position(12, 12)
-		singleplayer.style("width", "100px")
+		mainmenu.child(singleplayer)
+		singleplayer.style("width", "100%")
 		singleplayer.mouseClicked(() => {
 			sfx.signal.play()
 			host = false
@@ -2024,14 +2025,76 @@ Created by PixlPerfect01 and DTmakesgames`)
 			p.remove()
 		})
 
+		mainmenu.child(p.createP())
+
+		multiplayer = p.createButton("Multiplayer")
+		multiplayer.mouseOver(() => sfx.select.play())
+		mainmenu.child(multiplayer)
+		multiplayer.style("width", "100%")
+		multiplayer.mouseClicked(() => {
+			sfx.signal.play()
+			lobbylist.elt.style.display = "flex"
+			ctrlbuttons.elt.style.display = "flex"
+			mainmenu.elt.style.display = "none"
+			islobbyselector = true
+			getRooms()
+		})
+
+		mainmenu.child(p.createP())
+
+		editorbtn = p.createButton("Map Editor")
+		mainmenu.child(editorbtn)
+		editorbtn.style("width", "100%")
+		editorbtn.mouseClicked(() => {
+			sfx.signal.play()
+			window.open("editor/edit.html", "_blank", "popup=true,width=586,height=622").editorData = editorData
+		})
+		editorbtn.mouseOver(() => sfx.select.play())
+
+		mainmenu.child(p.createP())
+
+		helpbtn = p.createButton("Help")
+		mainmenu.child(helpbtn)
+		helpbtn.style("width", "100%")
+		helpbtn.mouseOver(() => sfx.select.play())
+		helpbtn.mouseClicked(() => {
+			sfx.signal.play()
+			showMsgBox("Help", `Playing Online
+
+You can play online with other people by selecting a room from the list. You can also host your own room, by typing in a room name and pressing "Host" down at the bottom.
+
+If you have a bad connection, or just don't want to deal with other people, you can click "Singleplayer" to play singleplayer.
+
+If no rooms are showing up for you, try pressing "Refresh" to reload the list.
+
+
+
+In-game Controls:
+
+${htpDefault}
+
+Credits:
+
+Made with PeerJS and P5
+
+Created by PixlPerfect01 and DTmakesgames`)
+		})
+
 		if (errmsg && showerr) {
 			showMsgBox(errtitle || "Uh oh!", errmsg)
 			errtitle = false;
 			errmsg = false
 		} else {
 			msgbox.hide()
-			lobbylist.elt.style.display = "flex"
-			ctrlbuttons.elt.style.display = "flex"
+			if (islobbyselector) {
+				lobbylist.elt.style.display = "flex"
+				ctrlbuttons.elt.style.display = "flex"
+				mainmenu.elt.style.display = "none"
+			} else {
+				lobbylist.elt.style.display = "none"
+				ctrlbuttons.elt.style.display = "none"
+				mainmenu.elt.style.display = "flex"
+			}
 		}
 		showerr = true
 		p.keyPressed = ()=>{
@@ -2049,16 +2112,22 @@ Created by PixlPerfect01 and DTmakesgames`)
 		p.scale(2)
 		p.noSmooth()
 		p.scale(2)
+		// future note to self: im double drawing the background one without the filter and one with
+		// this is so when blurred you cant see the seams of the image
 		p.image(bg, -bgpos, 0, 240, 120, bgx, bgy, 240, 120)
 		p.image(bg, -bgpos+240, 0, 240, 120, bgx, bgy, 240, 120)
-		ctx.filter = "blur(3px)"
+		if (islobbyselector || msgbox.elt.style.display != "none") {
+			ctx.filter = "blur(10px)"
+		} else {
+			ctx.filter = "blur(3px)"
+		}
 		p.image(bg, -bgpos, 0, 240, 120, bgx, bgy, 240, 120)
 		p.image(bg, -bgpos+240, 0, 240, 120, bgx, bgy, 240, 120)
 		p.image(fg, -bgpos, 0)
-		p.image(fg, -bgpos+240)
+		p.image(fg, -bgpos+240, 0)
 		ctx.filter = "none"
 		p.scale(1 / 2)
-		p.fill("#0007")
+		p.fill("#000a")
 		p.noStroke()
 		p.rect(0, 0, 240, 240)
 
@@ -2068,9 +2137,14 @@ Created by PixlPerfect01 and DTmakesgames`)
 		p.stroke("#000");
 		p.strokeWeight(0.5);
 
-		p.textSize(12)
-		p.textAlign(p.CENTER, p.TOP)
-		p.text("Not Alone", 120, 8)
+		if (!islobbyselector && msgbox.elt.style.display == "none") {
+			p.textSize(20)
+			p.textAlign(p.LEFT, p.TOP)
+			p.text("Not Alone", 30, 50)
+			p.textSize(7)
+			p.textAlign(p.LEFT, p.TOP)
+			p.text("A game by DT and PixlPerfect", 30, 80)
+		}
 
 		p.textSize(6)
 		p.textAlign(p.LEFT, p.BASELINE)
