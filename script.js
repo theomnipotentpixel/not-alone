@@ -1889,7 +1889,7 @@ Signals: ${signals.length}`, 0, 0)
 				levelsmenu.hide()
 			}
 		}
-		if (p.keyCode == 82) {
+		if (p.keyCode == 82 && !paused) {
 			if (host || connectid) {
 				send({
 					type: "control",
