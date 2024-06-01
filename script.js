@@ -422,8 +422,10 @@ const g = p => {
 				"peer-unavailable": "The room you are trying to join is no longer being hosted."
 			}
 			if (err.type == "network") {
-				bottomtext = "Error: Disconnected from signalling server.\nYour room will be inaccessible until you reconnect.";
-				bottomtexttime = Date.now() + 5000;
+				if (host) {
+					bottomtext = "Error: Disconnected from signalling server.";
+					bottomtexttime = Date.now() + 5000;
+				}
 			} else {
 				errtitle = "Uh oh!"
 				errmsg = "Error: " + err.type + (errmsgs[err.type] ? ": " + errmsgs[err.type] : "")
