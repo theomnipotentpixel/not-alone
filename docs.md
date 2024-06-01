@@ -121,3 +121,23 @@ never sent in vanilla
 when received, sets the text on the pause menu (defaults to the how to play screen)
 
 - `msg` - text to set it to
+
+### `timer`
+
+never sent in vanilla
+
+when received, modifies the timer that appears at the top of the screen
+
+- `time` - the time in seconds to set the timer to
+- `countdown` - whether or not the timer should be counting down
+- `hidden` - whether or not the timer is hidden
+- `paused` - whether or not the timer is paused
+
+### `texture`
+
+never sent in vanilla
+
+when received, replaces the tileset texture that shares the id specified. 
+
+- `id` - the id to use. defaults to "default", which is the default texture used in levels
+- `url` - the url or uri the image is located at

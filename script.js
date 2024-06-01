@@ -10,6 +10,8 @@ let editorData = {
 	f: 4
 }
 
+let tilesets = {};
+
 let settings = {
 	swapJumpAndTalk: false,
 	music: 1, // making these numbers for the future
@@ -100,7 +102,7 @@ class SFX {
 		try {
 			this.audio.volume = settings.sfx
 			this.audio.currentTime = 0;
-			this.audio.play()
+			this.audio.play().catch(e=>{})
 		} catch (e) { }
 	}
 }
@@ -124,7 +126,7 @@ class Music {
 			if (this.currentplaying) this.currentplaying.pause()
 			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
 			current.currentTime = 0;
-			current.play()
+			current.play().catch(e=>{})
 			this.volume = 1
 			current.volume = settings.music
 			if (!current.paused) {
@@ -143,7 +145,7 @@ class Music {
 			if (this.currentplaying) this.currentplaying.pause()
 			let current = this.audio[Math.floor(Math.random() * this.audio.length)];
 			current.currentTime = 0;
-			current.play()
+			current.play().catch(e=>{})
 			this.volume = 1
 			current.volume = settings.music
 			current.loop = true
@@ -207,7 +209,6 @@ let mptooltip;
 let mpsignals;
 let sky;
 let npcs;
-let tilesets = {};
 let jetpack;
 
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
@@ -482,6 +483,14 @@ const g = p => {
 
 	let mpClients = {};
 
+	let ingametimer = 0
+	let timercountdown = false
+	let timerpaused = false
+	let timerhidden = false
+
+	let htpdiv = p.createDiv(howtoplay)
+	htpdiv.style("padding", "12px")
+
 	function message(packet) {
 		let id = packet.id
 		if (packet.type == "move") {
@@ -507,14 +516,14 @@ const g = p => {
 			}
 		}
 		if (packet.type == "setpos") {
-			player.x = packet.x
-			player.y = packet.y
-			currentLevelX = packet.rx
-			currentLevelY = packet.ry
+			if (typeof packet.x === "number") player.x = packet.x
+			if (typeof packet.y === "number") player.y = packet.y
+			if (typeof packet.rx === "number") currentLevelX = packet.rx
+			if (typeof packet.ry === "number") currentLevelY = packet.ry
 		}
 		if (packet.type == "setvel") {
-			player.dx = packet.dx
-			player.dy = packet.dy
+			if (typeof packet.dx === "number") player.dx = packet.dx
+			if (typeof packet.dy === "number") player.dy = packet.dy
 		}
 		if (packet.type == "remove") {
 			delete mpClients[id]
@@ -538,6 +547,18 @@ const g = p => {
 		if (packet.type == "motd") {
 			htpdiv.elt.innerText = packet.msg;
 		}
+		if (packet.type == "timer") {
+			if (typeof packet.countdown === "boolean") {
+				timercountdown = packet.countdown
+			}
+			if (typeof packet.hidden === "boolean") {
+				timerhidden = packet.hidden
+			}
+			if (typeof packet.paused === "boolean") {
+				timerpaused = packet.paused
+			}
+			if (typeof packet.time === "number") ingametimer = packet.time * 1000
+		}
 		if (packet.type == "signal") {
 			if (mpClients[id])
 				signals.push(new MPSignal(mpClients[id], packet.sprite))
@@ -545,6 +566,11 @@ const g = p => {
 		if (packet.type == "levelpack") {
 			console.log("levelpack")
 			loadLevels(packet.levelpack)
+		}
+		if (packet.type == "texture") {
+			if (typeof packet.id !== "string") packet.id = "default"
+			if (typeof packet.url === "string")
+				tilesets[packet.id] = p.loadImage(packet.url);
 		}
 	}
 
@@ -658,7 +684,7 @@ const g = p => {
 					key.x += (snappos.x - key.x) / 10
 					key.y += (snappos.y - key.y) / 10
 				}
-				p.image(tilesets.grassy, key.x-4, key.y-4 + 1.5*Math.sin(panimtimer/30+i*2), 8, 8, 48, 224, 8, 8)
+				p.image(tilesets.default, key.x-4, key.y-4 + 1.5*Math.sin(panimtimer/30+i*2), 8, 8, 48, 224, 8, 8)
 			}
 			if (this.jetpack) {
 				if (!this.mirror) {
@@ -1111,11 +1137,9 @@ const g = p => {
 		pausemenu.position(16, 80)
 		pausemenu.size(448, 320)
 
-		let htpdiv = p.createDiv(howtoplay)
-		pausemenu.child(htpdiv)
-		htpdiv.style("padding", "12px")
-
 		pausemenu.child(p.createP(""))
+
+		pausemenu.child(htpdiv)
 
 		let resumebtn = p.createButton('Resume Game')
 		resumebtn.mouseClicked(() => {
@@ -1369,6 +1393,26 @@ const g = p => {
 		lvlspan.style("margin-bottom", "10px")
 		optionsdiv.child(lvlspan)
 
+		optionsdiv.child(p.createP("Advanced Controls"))
+
+		let packetinp = p.createInput()
+		packetinp.elt.placeholder = "Packet JSON"
+		optionsdiv.child(packetinp)
+
+		let broadcastbtn = p.createButton("Broadcast Packet")
+		optionsdiv.child(broadcastbtn)
+		broadcastbtn.mouseClicked(() => {
+			try {
+				sfx.signal.play()
+				if (host) broadcast(JSON.parse(packetinp.value()))
+			} catch(e) {
+				bottomtext = "Error:\n\n"+e
+				bottomtexttime = 5000
+			}
+		})
+		broadcastbtn.mouseOver(() => sfx.select.play())
+		broadcastbtn.style("margin-bottom", "10px")
+
 		let backbtn = p.createButton("Back")
 		optionsmenu.child(backbtn)
 		backbtn.position(12, 12)
@@ -1441,8 +1485,6 @@ const g = p => {
 		levelsmenu.hide();
 		clientSettingsMenu.hide();
 	}
-
-	let ingametimer = 0
 
 	p.draw = function() {
 		// handle music playing
@@ -1534,10 +1576,27 @@ const g = p => {
 		p.stroke("#000");
 		p.strokeWeight(0.5);
 
-		if (moved && !offlinepause) ingametimer += p.deltaTime
-		p.textSize(9);
-		p.textAlign(p.CENTER, p.TOP);
-		p.text(getTimer(ingametimer), 120, 8);
+		if (moved && !offlinepause && !timerpaused) {
+			if (timercountdown) {
+				if (ingametimer > 0) {
+					ingametimer -= p.deltaTime
+				} else if (ingametimer < 0) {
+					ingametimer = 0
+				}
+			} else {
+				ingametimer += p.deltaTime
+			}
+		}
+		
+		if (!timerhidden) {
+			p.textSize(9);
+			p.textAlign(p.CENTER, p.TOP);
+			if (timercountdown && ingametimer == 0) {
+				p.fill("#f33");
+			}
+			p.text(getTimer(ingametimer), 120, 8);
+			p.fill("#fff");
+		}
 
 		drawNPCText();
 
@@ -1670,7 +1729,7 @@ Signals: ${signals.length}`, 0, 0)
 		for (let y = 0; y < 30; y++) {
 			for (let x = 0; x < 30; x++) {
 				// bg tile
-				// p.image(tilesets[level.tileset||"grassy"], x*8, y*8, 8, 8, 56, 120, 8, 8);
+				// p.image(tilesets[level.tileset||"default"], x*8, y*8, 8, 8, 56, 120, 8, 8);
 				if (typeof level[x + ',' + y] == "number") {
 					if (animtimer == 0) {
 						if (frames[level[x + ',' + y]]) level[x + ',' + y] = frames[level[x + ',' + y]]
@@ -1683,7 +1742,7 @@ Signals: ${signals.length}`, 0, 0)
 						ctx.globalAlpha = 0.25
 					else
 						ctx.globalAlpha = 1
-					p.image(tilesets[level.tileset || "grassy"], x * 8, y * 8, 8, 8, tilex, tiley, 8, 8);
+					p.image(tilesets[level.tileset || "default"] || tilesets.default, x * 8, y * 8, 8, 8, tilex, tiley, 8, 8);
 				}
 			}
 		}
@@ -1707,7 +1766,7 @@ Signals: ${signals.length}`, 0, 0)
 						ctx.globalAlpha = 0.25
 					else
 						ctx.globalAlpha = 1
-					p.image(tilesets[level.tileset || "grassy"], x * 8, y * 8, 8, 8, tilex, tiley, 8, 8);
+					p.image(tilesets[level.tileset || "default"] || tilesets.default, x * 8, y * 8, 8, 8, tilex, tiley, 8, 8);
 				}
 			}
 		}
@@ -1941,7 +2000,7 @@ const m = p => {
 		if (!mpsignals) mpsignals = p.loadImage("mp signals.png");
 		if (!sky) sky = p.loadImage("sky.png");
 		if (!npcs) npcs = p.loadImage("npcs.png");
-		if (!tilesets.grassy) tilesets.grassy = p.loadImage("tiles/grassy.png");
+		tilesets.default = p.loadImage("tiles/default.png");
 		if (!player_img) player_img = p.loadImage("character.png");
 		if (!defaultlevels) defaultlevels = p.loadStrings("levelpacks/classic.lvls")
 		if (!builtins) builtins = p.loadJSON("levelpacks/builtins.json")
