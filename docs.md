@@ -53,9 +53,9 @@ when received, removes the player hologram the id corresponds with
 
 ### `levelpack`
 
-sent when the levelpack is updated, or when a new player joins a room with a custom levelpack
+sent when the levelpack is updated, or when a new player joins a room
 
-when received, updates the levelpack to the received value and resets the levels
+when received, updates the levelpack to the received value and resets the levels. if the client is still on the connecting screen, this packet also removes that screen. the client wont show the game window until at least one levelpack has been receied
 
 - `levelpack` - the levelpack
 
@@ -79,17 +79,36 @@ when received, sets the big text in the center of the screen
 - `msg` - the text to show
 - `time` - the time in milliseconds to show the message
 
-## Ignored packets
-
-Packets that are sent, but normally are ignored when received and not interpreted.
-
 ### `control`
 
 sent when one of the control keys are pressed
 
-ignored when received
+when received, if key is reset, the host will re-send the current level pack to the client
 
-- `key` (up/down/left/right/jump) - the control key that was pressed
+- `key` (up/down/left/right/jump/reset) - the control key that was pressed
+
+### `timer`
+
+sent when the host receives a reset request from a client
+
+when received, modifies the timer that appears at the top of the screen
+
+- `time` - the time in seconds to set the timer to
+- `countdown` - whether or not the timer should be counting down
+- `hidden` - whether or not the timer is hidden
+- `paused` - whether or not the timer is paused
+
+### `setting`
+
+sent when the host changes one of the host settings
+
+when received, modifies the local copy of the host settings
+
+- `communication` - whether or not players are allowed to send signals
+
+## Ignored packets
+
+Packets that are sent, but normally are ignored when received and not interpreted.
 
 ### `talkto`
 
@@ -121,17 +140,6 @@ never sent in vanilla
 when received, sets the text on the pause menu (defaults to the how to play screen)
 
 - `msg` - text to set it to
-
-### `timer`
-
-never sent in vanilla
-
-when received, modifies the timer that appears at the top of the screen
-
-- `time` - the time in seconds to set the timer to
-- `countdown` - whether or not the timer should be counting down
-- `hidden` - whether or not the timer is hidden
-- `paused` - whether or not the timer is paused
 
 ### `texture`
 

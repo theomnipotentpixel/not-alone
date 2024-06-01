@@ -25,6 +25,7 @@ if (localStorage.notalonesettings) {
 
 // build settings div globally, that way you can access them anywhere
 let settingsDiv = document.createElement("div")
+settingsDiv.style.padding = "10px"
 
 function savesettings() {
 	localStorage.notalonesettings = JSON.stringify(settings)
@@ -37,6 +38,7 @@ function addCheckboxSetting(label, onchange, state=false) {
 	checkbox.type = "checkbox"
 	eLabel.append(checkbox)
 	const eP = document.createElement("p")
+	eP.style.textAlign = "left"
 	eP.append(eLabel)
 	settingsDiv.append(eP)
 	checkbox.checked = state
@@ -238,6 +240,7 @@ else
 let connectid = "";
 const htpDefault = `You can use WASD or arrow keys to move around
 Press SPACE to jump
+Press R to reset
 
 Hold SHIFT or E to view the list of signals and emojis you can send
 
@@ -298,6 +301,7 @@ const g = p => {
 		if (upload) upload(file)
 	});
 	let levelPackName = "Default";
+	let hostsettings = {}
 
 	fileinp.hide();
 
@@ -568,11 +572,16 @@ const g = p => {
 		if (packet.type == "levelpack") {
 			console.log("levelpack")
 			loadLevels(packet.levelpack)
+			music.lobby.stop()
+			isconnecting = false
 		}
 		if (packet.type == "texture") {
 			if (typeof packet.id !== "string") packet.id = "default"
 			if (typeof packet.url === "string")
 				tilesets[packet.id] = p.loadImage(packet.url);
+		}
+		if (packet.type == "setting") {
+			if (typeof packet.communication !== "boolean") hostsettings.communication = packet.communication
 		}
 	}
 
@@ -601,13 +610,27 @@ const g = p => {
 					id: conn.id,
 				})
 			} else if (packet.type == "signal") {
-				if (conn.lastsignal + 100 < Date.now()) {
+				if (conn.lastsignal + 100 < Date.now() && hostsettings.communication) {
 					conn.lastsignal = Date.now()
 					conn.broadcast({
 						type: "signal",
 						sprite: packet.sprite,
 						id: conn.id,
 					})
+				}
+			} else if (packet.type == "control") {
+				if (packet.key == "reset" && hostsettings.canreset) {
+					conn.send(JSON.stringify({
+						type: "levelpack",
+						levelpack: currentLevelPack
+					}))
+					conn.send(JSON.stringify({
+						type: "timer",
+						time: 0,
+						countdown: false,
+						hidden: false,
+						paused: false,
+					}))
 				}
 			}
 		} catch (e) {
@@ -1090,6 +1113,8 @@ const g = p => {
 	let levelsmenu;
 	let loadingmenu;
 
+	let isconnecting;
+
 	let movepacketinterval;
 
 	function loadLevels(lvls) {
@@ -1109,8 +1134,16 @@ const g = p => {
 	let chanceofmusic = 0
 
 	p.setup = function() {
+		const singleplayer = !connectid && !host
+
+		hostsettings = {}
 		chanceofmusic = 0
-		music.lobby.stop()
+		if (host || singleplayer) {
+			music.lobby.stop()
+			isconnecting = false
+		} else {
+			isconnecting = true
+		}
 		loadLevels(currentLevelPack || defaultlevels)
 		p.frameRate(60);
 		p.createCanvas(240 * SCALE, 240 * SCALE);
@@ -1153,8 +1186,6 @@ const g = p => {
 		pausemenu.child(resumebtn)
 		
 		let roomnameinp = p.createInput()
-
-		const singleplayer = !connectid && !host
 
 		let disconnectbtn = p.createButton(singleplayer ? "Quit to Menu" : 'Disconnect')
 		
@@ -1314,7 +1345,36 @@ const g = p => {
 			}
 		}
 
-		//optionsdiv.child(p.createP("Admin Controls"))
+		function addCheckboxOption(label, onchange, state=false) {
+			const eLabel = document.createElement("label")
+			eLabel.innerText = label + " "
+			eLabel.style.fontSize = "14px"
+			const checkbox = document.createElement("input")
+			checkbox.type = "checkbox"
+			eLabel.append(checkbox)
+			const eP = document.createElement("p")
+			eP.style.textAlign = "left"
+			eP.append(eLabel)
+			optionsdiv.child(eP)
+			checkbox.checked = state
+			checkbox.onchange = e=>{
+				onchange(checkbox.checked)
+			}
+		}
+
+		optionsdiv.child(p.createP("Room Settings"))
+
+		hostsettings.communication = true
+		addCheckboxOption("Allow signalling:", v => {
+			hostsettings.communication = v
+		}, true)
+
+		hostsettings.canreset = true
+		addCheckboxOption("Allow resetting the map:", v => {
+			hostsettings.canreset = v
+		}, true)
+
+		optionsdiv.child(p.createP("Admin Controls"))
 
 		let tpallherebtn = p.createButton("Teleport All Here")
 		optionsdiv.child(tpallherebtn)
@@ -1502,6 +1562,17 @@ const g = p => {
 	}
 
 	p.draw = function() {
+		// if connecting, draw text and return
+		if (isconnecting) {
+			p.scale(2)
+			p.fill(0)
+			p.rect(0, 0, 240, 240)
+			p.fill(255)
+			p.textSize(20)
+			p.textAlign(p.CENTER, p.CENTER)
+			p.text("Connecting...", 120, 120)
+			return
+		}
 		// handle music playing
 		let preferredmusic
 		if (currentLevelY > -7) {
@@ -1653,13 +1724,19 @@ const g = p => {
 			p.fill("#0007");
 			p.stroke("#0000");
 			p.rect(0, 0, 240, 240);
-			p.fill("#fff");
-			p.stroke("#000");
-			p.textAlign(p.CENTER, p.CENTER);
 		}
 
-		if (p.keyIsDown(p.SHIFT) || p.keyIsDown(69))
-			p.image(mptooltip, 79, 120);
+		if (p.keyIsDown(p.SHIFT) || p.keyIsDown(69)) {
+			if (hostsettings.communication) {
+				p.image(mptooltip, 79, 120)
+			} else {
+				p.fill("#f33");
+				p.stroke("#000");
+				p.textAlign(p.CENTER, p.CENTER);
+				p.textSize(10);
+				p.text("Signals are disabled", 120, 120)
+			}
+		}
 
 		if (dev) {
 			p.textAlign(p.LEFT, p.TOP);
@@ -1808,6 +1885,17 @@ Signals: ${signals.length}`, 0, 0)
 				levelsmenu.hide()
 			}
 		}
+		if (p.keyCode == 82) {
+			if (host || connectid) {
+				send({
+					type: "control",
+					key: "reset",
+				})
+			} else {
+				loadLevels(currentLevelPack)
+				ingametimer = 0
+			}
+		}
 		if (paused) return
 		if (!settings.swapJumpAndTalk ? (p.keyCode == (87) || p.keyCode == (button_npcTalk)) : p.keyCode == (button_jump)) {
 			send({
@@ -1825,70 +1913,70 @@ Signals: ${signals.length}`, 0, 0)
 			}
 		}
 		if (p.keyCode == 49) {
-			signals.push(new MPSignal(player, 0))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 0))
 			send({
 				type: "signal",
 				sprite: 0,
 			})
 		}
 		if (p.keyCode == 50) {
-			signals.push(new MPSignal(player, 1))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 1))
 			send({
 				type: "signal",
 				sprite: 1,
 			})
 		}
 		if (p.keyCode == 51) {
-			signals.push(new MPSignal(player, 2))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 2))
 			send({
 				type: "signal",
 				sprite: 2,
 			})
 		}
 		if (p.keyCode == 52) {
-			signals.push(new MPSignal(player, 3))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 3))
 			send({
 				type: "signal",
 				sprite: 3,
 			})
 		}
 		if (p.keyCode == 53) {
-			signals.push(new MPSignal(player, 4))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 4))
 			send({
 				type: "signal",
 				sprite: 4,
 			})
 		}
 		if (p.keyCode == 54) {
-			signals.push(new MPSignal(player, 5))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 5))
 			send({
 				type: "signal",
 				sprite: 5,
 			})
 		}
 		if (p.keyCode == 55) {
-			signals.push(new MPSignal(player, 6))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 6))
 			send({
 				type: "signal",
 				sprite: 6,
 			})
 		}
 		if (p.keyCode == 56) {
-			signals.push(new MPSignal(player, 7))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 7))
 			send({
 				type: "signal",
 				sprite: 7,
 			})
 		}
 		if (p.keyCode == 57) {
-			signals.push(new MPSignal(player, 8))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 8))
 			send({
 				type: "signal",
 				sprite: 8,
 			})
 		}
 		if (p.keyCode == 48) {
-			signals.push(new MPSignal(player, 9))
+			if (hostsettings.communication) signals.push(new MPSignal(player, 9))
 			send({
 				type: "signal",
 				sprite: 9,
@@ -2033,7 +2121,7 @@ const m = p => {
 		p.createCanvas(480, 480)
 		ctx = p.drawingContext
 
-		currentLevelPack = null
+		currentLevelPack = defaultlevels
 
 		mainmenu = p.createDiv()
 		mainmenu.position(60, 200)
