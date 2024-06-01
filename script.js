@@ -210,9 +210,6 @@ let npcs;
 let tilesets = {};
 let jetpack;
 
-let currentMusicLevel = 1;
-let currentSFXLevel = 1;
-
 let errtitle = "New Update: " + VERSION.toFixed(1) + `.${PATCH}!`;
 let errmsg =
 	`- Added music for the main menu
