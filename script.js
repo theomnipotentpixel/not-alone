@@ -360,9 +360,14 @@ const g = p => {
 				network: "Disconnected from signalling server.",
 				"peer-unavailable": "The room you are trying to join is no longer being hosted."
 			}
-			errtitle = "Uh oh!"
-			errmsg = "Error: " + err.type + (errmsgs[err.type] ? ": " + errmsgs[err.type] : "")
-			p.quit()
+			if (err.type == "network") {
+				bottomtext = "Error: Disconnected from signalling server.\nYour room will be inaccessible until you reconnect.";
+				bottomtexttime = Date.now() + 5000;
+			} else {
+				errtitle = "Uh oh!"
+				errmsg = "Error: " + err.type + (errmsgs[err.type] ? ": " + errmsgs[err.type] : "")
+				p.quit()
+			}
 		}
 		// disable ws connections but keep code temporarily
 		return
