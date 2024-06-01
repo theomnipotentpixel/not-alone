@@ -423,7 +423,7 @@ const g = p => {
 			}
 			if (err.type == "network") {
 				if (host) {
-					bottomtext = "Error: Disconnected from signalling server.";
+					bottomtext = "Error: Heartbeat failed. Retrying...";
 					bottomtexttime = Date.now() + 5000;
 				}
 			} else {
@@ -1152,12 +1152,29 @@ const g = p => {
 		resumebtn.mouseOver(() => sfx. select.play())
 		pausemenu.child(resumebtn)
 		
-		if (host) {
-			let optionsbtn = p.createButton('Host Settings')
+		let roomnameinp = p.createInput()
+
+		const singleplayer = !connectid && !host
+
+		let disconnectbtn = p.createButton(singleplayer ? "Quit to Menu" : 'Disconnect')
+		
+		if (host || (!host && !connectid)) {
+			let optionsbtn = p.createButton(host ? 'Host Settings' : 'Start Hosting')
 			optionsbtn.mouseClicked(() => {
-				pausemenu.hide()
 				sfx.signal.play()
-				optionsmenu.elt.style.display = "flex"
+				if (!host) {
+					const roomname = prompt("Please input a name for the room.")
+					if (roomname && roomname.replace(/^\s+|\s+$/gm, "")) {
+						optionsbtn.elt.innerText = "Host Settings"
+						host = roomname.replace(/^\s+|\s+$/gm, "")
+						roomnameinp.elt.value = host
+						connect()
+						disconnectbtn.elt.innerText = "Disconnect"
+					}
+				} else {
+					pausemenu.hide()
+					optionsmenu.elt.style.display = "flex"
+				}
 			})
 			optionsbtn.mouseOver(() => sfx.select.play())
 			optionsbtn.size(100, 24)
@@ -1348,7 +1365,6 @@ const g = p => {
 			jetpackbtn.style("margin-bottom", "10px")
 		}
 
-		let roomnameinp = p.createInput()
 		roomnameinp.elt.placeholder = "Room name"
 		roomnameinp.elt.value = host
 		optionsdiv.child(roomnameinp)
@@ -1408,7 +1424,7 @@ const g = p => {
 				sfx.signal.play()
 				if (host) broadcast(JSON.parse(packetinp.value()))
 			} catch(e) {
-				bottomtext = "Error:\n\n"+e
+				bottomtext = "Error: "+e
 				bottomtexttime = 5000
 			}
 		})
@@ -1466,9 +1482,6 @@ const g = p => {
 		})
 		clientSettingsBackbtn.mouseOver(() => sfx.select.play())
 
-		const singleplayer = !connectid && !host
-
-		let disconnectbtn = p.createButton(singleplayer ? "Quit to Menu" : 'Disconnect')
 		disconnectbtn.mouseClicked(() => {
 			sfx.signal.play()
 			if (conn) {
@@ -1557,6 +1570,12 @@ const g = p => {
 		for (const [id, z] of Object.entries(mpClients)) {
 			z.update();
 			z.draw();
+			if (dev) {
+				p.textSize(7)
+				p.textAlign(p.CENTER, p.BOTTOM);
+				p.fill("#0f0")
+				p.text(id, z.x, z.y - 4)
+			}
 		}
 		ctx.globalAlpha = 1
 		player.draw();
@@ -1603,6 +1622,7 @@ const g = p => {
 		drawNPCText();
 
 		if ((bottomtexttime - Date.now()) > 0 || bottomtexttime == 0) {
+			p.textSize(9);
 			p.textAlign(p.LEFT, p.BOTTOM);
 			ctx.globalAlpha = (bottomtexttime - Date.now()) / 2000;
 			p.text(bottomtext, 4, 236);
@@ -1630,7 +1650,7 @@ const g = p => {
 			p.text("Press any key to start", 120, 210);
 		}
 		if (paused) {
-			p.fill("#0003");
+			p.fill("#0007");
 			p.stroke("#0000");
 			p.rect(0, 0, 240, 240);
 			p.fill("#fff");
