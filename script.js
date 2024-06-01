@@ -1885,8 +1885,8 @@ const m = p => {
 
 		msgbox = p.createDiv('')
 		msgbox.class("flashdiv")
-		msgbox.position(16, 120)
-		msgbox.size(448, 240)
+		msgbox.position(16, 70)
+		msgbox.size(448, 340)
 
 		let msgboxtitle = document.createElement("h2")
 		msgbox.child(msgboxtitle)
@@ -1961,7 +1961,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 		})
 
 		refreshbtn = p.createButton("Refresh")
-		refreshbtn.mouseOver(() => sfx.selects.play())
+		refreshbtn.mouseOver(() => sfx.select.play())
 		lobbylist.child(refreshbtn)
 		refreshbtn.style("position", "absolute")
 		refreshbtn.style("right", "12px")
