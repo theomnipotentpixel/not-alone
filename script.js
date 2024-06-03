@@ -10,12 +10,15 @@ let editorData = {
 	f: 4
 }
 
+let award
+
 let tilesets = {};
 
 let settings = {
 	swapJumpAndTalk: false,
 	music: 1, // making these numbers for the future
 	sfx: 1,
+	levelprogress: {},
 }
 
 if (localStorage.notalonesettings) {
@@ -675,6 +678,7 @@ const g = p => {
 	}
 
 	const Player = function(x, y, control = false) {
+		window.player = this
 		this.x = x;
 		this.y = y;
 		this.dx = 0;
@@ -934,6 +938,11 @@ const g = p => {
 					currentmusictrack = music.sunglasses
 					chanceofmusic = 0
 					currentmusictrack.play()
+					if (award) {
+						const lp = settings.levelprogress[award.url]
+						if (!lp.completed || lp.completed > ingametimer) lp.completed = ingametimer
+						savesettings()
+					}
 				}
 				if ((ctile == 224) && !this.jetpack) {
 					this.jetpack = true
@@ -1207,6 +1216,7 @@ const g = p => {
 						host = roomname.replace(/^\s+|\s+$/gm, "")
 						roomnameinp.elt.value = host
 						connect()
+						award = null
 						disconnectbtn.elt.innerText = "Disconnect"
 					}
 				} else {
@@ -2080,6 +2090,7 @@ const m = p => {
 								else {
 									console.log("joining" + (connectid = data))
 									host = false
+									award = null
 									game = new p5(g, gamewin)
 									p.remove()
 								}
@@ -2126,9 +2137,15 @@ const m = p => {
 		if (!defaultlevels) defaultlevels = p.loadStrings("levelpacks/classic.lvls")
 		if (!builtins) builtins = p.loadJSON("levelpacks/builtins.json")
 	}
+	function getTimer(millis) {
+		var hours = Math.floor(millis / 3600000);
+		var minutes = Math.floor(millis / 60000) % 60;
+		var seconds = Math.floor(millis / 1000) % 60;
+		return (hours ? hours + ":" + minutes.toString().padStart(2, "0") : minutes) + ":" + seconds.toString().padStart(2, "0") + "." + Math.floor(millis % 1000).toString().padStart(3, "0");
+	}
 	p.setup = function() {
 
-		builtins.packs[0].cache = defaultlevels.join("\n")
+		builtins.packs.find(e=>e.url=="levelpacks/classic.lvls").cache = defaultlevels.join("\n")
 		p.createCanvas(480, 480)
 		ctx = p.drawingContext
 
@@ -2263,6 +2280,7 @@ const m = p => {
 			sfx.signal.play()
 			host = roomname.value()
 			connectid = false
+			award = null
 			game = new p5(g, gamewin)
 			p.remove()
 		})
@@ -2271,13 +2289,6 @@ const m = p => {
 		singleplayer.mouseOver(() => sfx.select.play())
 		mainmenu.child(singleplayer)
 		singleplayer.style("width", "100%")
-		// singleplayer.mouseClicked(() => {
-		// 	sfx.signal.play()
-		// 	host = false
-		// 	connectid = false
-		// 	game = new p5(g, gamewin)
-		// 	p.remove()
-		// })
 		singleplayer.mouseClicked(() => {
 			sfx.signal.play()
 			showMsgBox("Maps", "")
@@ -2303,20 +2314,30 @@ const m = p => {
 				namespan.innerText = e.name
 				btn.appendChild(namespan)
 				let authorspan = document.createElement("h4")
-				authorspan.innerText = "by "+e.author
+				authorspan.innerText = "by "+e.author+"\nDifficulty: "+"★".repeat(e.difficulty)
 				btn.appendChild(authorspan)
 				let descspan = document.createElement("span")
 				descspan.innerText = e.description
 				btn.appendChild(descspan)
+				if (!settings.levelprogress[e.url]) settings.levelprogress[e.url] = {
+					completed: false,
+				}
+				let complete = document.createElement("span")
+				complete.innerText = settings.levelprogress[e.url].completed ? "Completed in "+getTimer(settings.levelprogress[e.url].completed) : "Incomplete"
+				complete.style.position = "absolute"
+				complete.style.right = "12px"
+				complete.style.top = "12px"
+				btn.appendChild(complete)
 				btnswrap.appendChild(btn)
 
 				btn.onclick = async () => {
+					award = e
 					sfx.signal.play()
 					if (!e.cache) {
-						loadingmenu.elt.style.display = "flex"
+						showMsgBox("Loading", "Downloading map from "+e.url+'...', false)
 						let c = await (await fetch(e.url)).text()
 						e.cache = c
-						loadingmenu.hide()
+						closemsgbox()
 					}
 					currentLevelPack = e.cache.split("\n")
 					host = false
@@ -2364,6 +2385,7 @@ const m = p => {
 						currentLevelPack = e.split("\n")
 						host = false
 						connectid = false
+						award = null
 						game = new p5(g, gamewin)
 						p.remove()
 					}

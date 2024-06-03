@@ -1,10 +1,19 @@
 {
     "packs": [
         {
-            "name": "Classic Level Pack",
+            "name": "Classic Map",
             "author": "DT and PixlPerfect",
-            "description": "The original level pack created for the game jam. Has a sharp difficulty curve. Currently undefeated.",
+            "description": "The original map created for the game jam. Has a sharp difficulty curve. Currently undefeated.",
             "url": "levelpacks/classic.lvls",
+			"difficulty": 4,
+            "cache": null
+        },
+        {
+            "name": "Cliffside",
+            "author": "DT",
+            "description": "A punishing map designed to push you to your limits.",
+            "url": "levelpacks/mountaintop.lvls",
+			"difficulty": 5,
             "cache": null
         }
     ]
