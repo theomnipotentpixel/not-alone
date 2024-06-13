@@ -6,6 +6,7 @@
             "description": "The original map created for the game jam. Has a sharp difficulty curve. Currently undefeated.",
             "url": "levelpacks/classic.lvls",
 			"difficulty": 4,
+			"type": "lvls",
             "cache": null
         },
         {
@@ -14,7 +15,9 @@
             "description": "A punishing map designed to push you to your limits.",
             "url": "levelpacks/mountaintop.lvls",
 			"difficulty": 5,
-            "cache": null
+			"type": "lvls",
+            "cache": null,
+			"hidden": true
         }
     ]
 }

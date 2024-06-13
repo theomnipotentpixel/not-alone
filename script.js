@@ -574,6 +574,7 @@ const g = p => {
 				timerpaused = packet.paused
 			}
 			if (typeof packet.time === "number") ingametimer = packet.time * 1000
+			if (typeof packet.time === "string") ingametimer = packet.time
 		}
 		if (packet.type == "signal") {
 			if (mpClients[id])
@@ -1106,7 +1107,6 @@ const g = p => {
 	}
 
 	let player;
-	let currentLevel = 0;
 	let windDirection = 0;
 	let windSpeed = 0.55;
 	const SCALE = 2; // everything multiplied by this
@@ -1122,6 +1122,7 @@ const g = p => {
 		y: 25
 	}
 
+	let base_sky_y = -720;
 	let sky_y;
 	let pausemenu;
 	let optionsmenu;
@@ -1133,18 +1134,26 @@ const g = p => {
 
 	let movepacketinterval;
 
-	function loadLevels(lvls) {
-		levels = JSON.parse(lvls[0])
-		START_TILE = {
-			x: parseInt(lvls[1]) + 0.5,
-			y: parseInt(lvls[2]) + 0.5
+	function loadLevels(mappack) {
+		if (Array.isArray(mappack)) {
+			// levelpacks (1.0)
+			levels = JSON.parse(mappack[0])
+			START_TILE = {
+				x: parseInt(mappack[1]) + 0.5,
+				y: parseInt(mappack[2]) + 0.5
+			}
+			currentLevelX = 0
+			currentLevelY = 0
+			windDirection = 0
+			windSpeed = 0
+			base_sky_y = -720
+			sky_y = base_sky_y;
+			player = new Player(START_TILE.x * 8, START_TILE.y * 8);
+			if (currentmusictrack) currentmusictrack.stop()
+			chanceofmusic = 0
+		} else {
+			// mappacks (2.0)
 		}
-		currentLevelX = 0
-		currentLevelY = 0
-		sky_y = -720;
-		player = new Player(START_TILE.x * 8, START_TILE.y * 8);
-		if (currentmusictrack) currentmusictrack.stop()
-		chanceofmusic = 0
 	}
 
 	let chanceofmusic = 0
@@ -1303,7 +1312,11 @@ const g = p => {
 						loadingmenu.hide()
 					}
 					optionsmenu.elt.style.display = "flex"
-					currentLevelPack = e.cache.split("\n")
+					if (e.type == "lvls") {
+						currentLevelPack = e.cache.split("\n")
+					} else if (e.type == "mpk") {
+						currentLevelPack = JSON.parse(e.cache)
+					}
 					broadcast({
 						type: "levelpack",
 						levelpack: currentLevelPack
@@ -1650,7 +1663,7 @@ const g = p => {
 			panimtimer = 1;
 		}
 		//fuqer.update();	
-		sky_y = currentLevelY * -36 - 720;
+		sky_y = currentLevelY * -36 + base_sky_y;
 		// draw
 		ctx.globalAlpha = 1
 		p.noSmooth();
@@ -1689,7 +1702,7 @@ const g = p => {
 		p.stroke("#000");
 		p.strokeWeight(0.5);
 
-		if (moved && !offlinepause && !timerpaused) {
+		if (moved && !offlinepause && !timerpaused && typeof ingametimer === "number") {
 			if (timercountdown) {
 				if (ingametimer > 0) {
 					ingametimer -= p.deltaTime
@@ -1774,6 +1787,7 @@ Signals: ${signals.length}`, 0, 0)
 	}
 
 	function getTimer(millis) {
+		if (typeof millis !== "number") return millis + ""
 		var hours = Math.floor(millis / 3600000);
 		var minutes = Math.floor(millis / 60000) % 60;
 		var seconds = Math.floor(millis / 1000) % 60;
@@ -1813,7 +1827,7 @@ Signals: ${signals.length}`, 0, 0)
 			p.textAlign(npcText[i][0], p.BOTTOM);
 			p.text(...npcText[i][1])
 		}
-	}
+	}currentLevelY
 
 	let frames = {
 		20: 21,
@@ -2156,7 +2170,7 @@ const m = p => {
 		mainmenu.size(200, 190)
 		mainmenu.class("flashdiv")
 
-		lobbylist = p.createDiv('<h2>Rooms</h2>')
+		lobbylist = p.createDiv('<h2>Multiplayer</h2>')
 		lobbylist.class("flashdiv")
 		lobbylist.position(16, 48)
 		lobbylist.size(448, 352)
@@ -2228,7 +2242,7 @@ const m = p => {
 		mainmenubtn.style("position", "absolute")
 		mainmenubtn.style("left", "12px")
 		mainmenubtn.style("top", "12px")
-		mainmenubtn.style("width", "137px")
+		mainmenubtn.style("width", "100px")
 		mainmenubtn.mouseClicked(() => {
 			sfx.signal.play()
 			lobbylist.elt.style.display = "none"
@@ -2243,7 +2257,7 @@ const m = p => {
 		refreshbtn.style("position", "absolute")
 		refreshbtn.style("right", "12px")
 		refreshbtn.style("top", "12px")
-		refreshbtn.style("width", "137px")
+		refreshbtn.style("width", "100px")
 		refreshbtn.mouseClicked(() => {
 			sfx.signal.play()
 			getRooms()
@@ -2291,7 +2305,7 @@ const m = p => {
 		singleplayer.style("width", "100%")
 		singleplayer.mouseClicked(() => {
 			sfx.signal.play()
-			showMsgBox("Maps", "")
+			showMsgBox("Singleplayer", "")
 			lvlpacks = JSON.parse(localStorage.lvlpacks)
 			// built in packs
 			let btnspan = document.createElement("span")
@@ -2300,6 +2314,7 @@ const m = p => {
 			btnspan.style.display = "flex"
 			btnspan.style.flexDirection = "column"
 			builtins.packs.forEach((e, i) => {
+				if (e.hidden) return
 				let btnswrap = document.createElement("span")
 				btnswrap.style.display = "flex"
 				btnswrap.style.gap = "5px"
@@ -2314,7 +2329,8 @@ const m = p => {
 				namespan.innerText = e.name
 				btn.appendChild(namespan)
 				let authorspan = document.createElement("h4")
-				authorspan.innerText = "by "+e.author+"\nDifficulty: "+"★".repeat(e.difficulty)
+				authorspan.innerText = "by "+e.author
+				if (false) authorspan.innerText += "\nDifficulty: "+"★".repeat(e.difficulty)
 				btn.appendChild(authorspan)
 				let descspan = document.createElement("span")
 				descspan.innerText = e.description
@@ -2339,7 +2355,11 @@ const m = p => {
 						e.cache = c
 						closemsgbox()
 					}
-					currentLevelPack = e.cache.split("\n")
+					if (e.type == "lvls") {
+						currentLevelPack = e.cache.split("\n")
+					} else if (e.type == "mpk") {
+						currentLevelPack = JSON.parse(e.cache)
+					}
 					host = false
 					connectid = false
 					game = new p5(g, gamewin)
