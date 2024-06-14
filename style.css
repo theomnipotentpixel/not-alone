@@ -96,7 +96,7 @@ html, body {
 .flashdiv button, .flashdiv .upload {
 	cursor: pointer;
 }
-.flashdiv button, .flashdiv .upload, .flashdiv input[type=text] {
+.flashdiv button, .flashdiv .upload, .flashdiv input[type=text], .flashdiv input[type=range] {
     box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(255,255,255,0.25), inset -0.2em -0.2em 0.1em 0 rgba(0,0,0,0.5);
 	border: 1px solid #070707bb;
 	filter: drop-shadow(0 0 3px #07070777);
@@ -118,11 +118,11 @@ html, body {
 .flashdiv input[type=text], #border {
 	box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(0,0,0,0.5), inset -0.2em -0.2em 0.1em 0 rgba(255,255,255,0.25);
 }
-.flashdiv button:active, .flashdiv .upload:active, .flashdiv input:active {
+.flashdiv button:active, .flashdiv .upload:active, .flashdiv input[type=text]:active {
 	box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(0,0,0,0.5), inset -0.2em -0.2em 0.1em 0 rgba(255,255,255,0.25);
 	background: #ffffff07;
 }
-.flashdiv button:disabled, .flashdiv .upload:disabled, .flashdiv input:disabled {
+.flashdiv button:disabled, .flashdiv .upload:disabled, .flashdiv input[type=text]:disabled {
 	color: #fff7;
 	box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(255,255,255,0.25), inset -0.2em -0.2em 0.1em 0 rgba(0,0,0,0.55);
 	background: #ffffff07;
@@ -135,9 +135,33 @@ html, body {
 	pointer-events: none;
 }
 .flashdiv input[type=checkbox] {
-	width: 16px;
-	height: 16px;
+	width: 20px;
+	height: 20px;
 	vertical-align: middle;
+}
+.flashdiv input[type=range] {
+	appearance: none;
+	height: 10px;
+	padding: 0px;
+	width: unset;
+	display: inline;
+}
+.flashdiv input[type=range]::-webkit-slider-thumb, .flashdiv input[type=range]::-moz-range-thumb {
+	box-shadow: inset 0.2em 0.2em 0.1em 0 rgba(255,255,255,0.25), inset -0.2em -0.2em 0.1em 0 rgba(0,0,0,0.5);
+	border: 1px solid #070707bb;
+	filter: drop-shadow(0 0 3px #07070777);
+	background: #333;
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	border-radius: 5px;
+}
+input[type=checkbox] {
+	box-shadow: inset 0.3em 0.3em 0.15em 0 rgba(0,0,0,0.25), inset -0.3em -0.3em 0.15em 0 rgba(255,255,255,0.25);
+}
+input[type=checkbox]:checked {
+	accent-color: #bbb;
 }
 h1,h2,h3,h4,h5,h6,p {
 	filter: drop-shadow(0 0 3px #07070777);

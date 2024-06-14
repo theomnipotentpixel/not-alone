@@ -51,6 +51,29 @@ function addCheckboxSetting(label, onchange, state=false) {
 	}
 }
 
+function addSliderSetting(label, onchange, state=0) {
+	const eLabel = document.createElement("label")
+	eLabel.innerText = label + " "
+	const eValue = document.createElement("span")
+	eValue.innerText = (state * 100) + "%"
+	const slider = document.createElement("input")
+	slider.type = "range"
+	slider.min = 0
+	slider.max = 100
+	eLabel.append(slider)
+	eLabel.append(eValue)
+	const eP = document.createElement("p")
+	eP.style.textAlign = "left"
+	eP.append(eLabel)
+	settingsDiv.append(eP)
+	slider.value = state * 100
+	slider.oninput = e=>{
+		onchange(slider.value / 100)
+		savesettings()
+		eValue.innerText = slider.value + "%"
+	}
+}
+
 addCheckboxSetting("Swap up arrow and space bar:", v => settings.swapJumpAndTalk = v, settings.swapJumpAndTalk)
 
 let button_npcTalk = 38;
@@ -198,13 +221,13 @@ music.space = new Music("sounds/not_alone_space_1.mp3");
 music.lobby = new Music("sounds/not_alone_lobby_select.mp3");
 music.sunglasses = new Music("sounds/not_alone_sunglasses.mp3");
 
-addCheckboxSetting("Music:", v => {
-	settings.music = +v
+addSliderSetting("Music:", v => {
+	settings.music = v
 	for (const [k, v] of Object.entries(music)) {
 		v.setVolume(v.volume)
 	}
-}, !!settings.music)
-addCheckboxSetting("Sound effects:", v => settings.sfx = +v, !!settings.sfx)
+}, settings.music)
+addSliderSetting("Sound effects:", v => settings.sfx = v, settings.sfx)
 
 let game = {}
 let host = false;
