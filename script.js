@@ -1152,6 +1152,7 @@ const g = p => {
 	let clientSettingsMenu;
 	let levelsmenu;
 	let loadingmenu;
+	let passwordmenu;
 
 	let isconnecting;
 
@@ -1286,6 +1287,48 @@ const g = p => {
 		loadingmenu.child(loadingdiv)
 		loadingdiv.style("padding", "12px")
 		loadingdiv.child(document.createTextNode("Loading..."))
+
+		passwordmenu = p.createDiv('<h3>Password</h3>')
+		passwordmenu.class("flashdiv")
+		passwordmenu.position(16, 130)
+		passwordmenu.size(448, 220)
+		passwordmenu.hide()
+
+		let passworddiv = p.createDiv()
+		passwordmenu.child(passworddiv)
+		passworddiv.style("padding", "12px")
+		passworddiv.child(p.createP("This room is password protected. Please enter the correct password:"))
+
+		let passwordinp = p.createInput()
+		passwordinp.elt.placeholder = "Password"
+		passwordinp.elt.type = "password"
+		passworddiv.child(passwordinp)
+		
+		passworddiv.child(p.createP())
+
+		let passwordbtn = p.createButton("Join")
+		passworddiv.child(passwordbtn)
+		passwordbtn.mouseClicked(() => {
+			sfx.signal.play()
+			send({
+				"type": "password",
+				"password": passwordinp.elt.value,
+			})
+			passwordmenu.hide()
+		})
+		passwordbtn.mouseOver(() => sfx.select.play())
+
+		let passwordfailbtn = p.createButton("Disconnect")
+		passworddiv.child(passwordfailbtn)
+		passwordfailbtn.mouseClicked(() => {
+			sfx.signal.play()
+			if (conn) {
+				showerr = false
+				conn.close()
+				conn = false
+			} else p.quit()
+		})
+		passwordfailbtn.mouseOver(() => sfx.select.play())
 
 		levelsmenu = p.createDiv('<h3>Your Custom Maps</h3>')
 		levelsmenu.class("flashdiv")
