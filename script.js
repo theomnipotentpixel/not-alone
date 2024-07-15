@@ -2611,7 +2611,7 @@ Created by PixlPerfect01 and DTmakesgames`)
 			p.text("Not Alone", 30, 50)
 			p.textSize(7)
 			p.textAlign(p.LEFT, p.TOP)
-			p.text("A game by DT and PixlPerfect", 30, 80)
+			p.text("A game by DT and PixlPerfect01", 30, 80)
 		}
 
 		p.textSize(6)
