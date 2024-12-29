@@ -716,7 +716,7 @@ const g = p => {
 		this.deceleration = 0.5 / 2;
 		this.speedcap = 4.5 / 2;
 		this.gravity = 0.5 / 2;
-		this.jumpheight = -8 / 2;
+		this.jumpheight = -8;
 		this.control = control;
 		this.jump = false;
 		this.left = false;
