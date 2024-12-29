@@ -712,11 +712,11 @@ const g = p => {
 		this.walkframe = 0;
 		this.mirror = false;
 		this.sunglasses = false;
-		this.acceleration = 0.75 / 2;
-		this.deceleration = 0.5 / 2;
-		this.speedcap = 4.5 / 2;
-		this.gravity = 0.5 / 2;
-		this.jumpheight = -8;
+		this.acceleration = 0.75 / 1.5;
+		this.deceleration = 0.5 / 1.5;
+		this.speedcap = 4.5 / 1.5;
+		this.gravity = 0.5 / 2.25;
+		this.jumpheight = -8 / 1.5;
 		this.control = control;
 		this.jump = false;
 		this.left = false;
